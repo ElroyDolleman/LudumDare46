@@ -10,7 +10,7 @@ class RunState extends GroundedState
     public update() {
     }
 
-    public onCollisionSolved() {
+    public onCollisionSolved(result: CollisionResult) {
         
     }
 }

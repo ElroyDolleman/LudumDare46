@@ -24,7 +24,7 @@ class Actor
         this.y += this.speed.y * GameTime.getElapsed();
     }
 
-    public onCollisionSolved() {   
+    public onCollisionSolved(result: CollisionResult) {   
     }
 
     public calculateNextHitbox():Phaser.Geom.Rectangle {

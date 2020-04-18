@@ -12,7 +12,7 @@ class Player extends Actor
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
     constructor() {
-        super(new Phaser.Geom.Rectangle(100, 100, 14, 10));
+        super(new Phaser.Geom.Rectangle(107, 107, 14, 10));
         this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
 
         this.createStates();
@@ -37,7 +37,7 @@ class Player extends Actor
         this.currentState.enter();
     }
 
-    public onCollisionSolved() {
+    public onCollisionSolved(result: CollisionResult) {
         this.animator.updatePosition();
 
         this.drawHitbox();

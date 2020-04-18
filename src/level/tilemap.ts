@@ -14,6 +14,21 @@ class Tilemap {
     public getTile(col:number, row:number):Tile {
        return this.tiles[col + (row * this.columns)];
     }
+    public getTilesFromRect(rect: Phaser.Geom.Rectangle, margin: number = 0):Tile[] {
+        return this.getTilesFromTo(
+            this.toGridLocation(rect.x + margin, rect.y + margin), 
+            this.toGridLocation(rect.right + margin, rect.bottom + margin)
+        );
+    }
+    public getTilesFromTo(from: Phaser.Geom.Point, to: Phaser.Geom.Point):Tile[] {
+        let tiles = [];
+        for (let x = from.x; x <= to.x; x++) {
+            for (let y = from.y; y <= to.y; y++) {
+                tiles.push(this.getTile(x, y));
+            }
+        }
+        return tiles;
+    }
     public worldToTile(x:number, y:number):Tile {
         return this.getTile(this.toColumn(x), this.toRow(y));
     }

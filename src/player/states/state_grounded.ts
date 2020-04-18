@@ -10,7 +10,7 @@ class GroundedState extends BaseState
     public update() {
     }
 
-    public onCollisionSolved() {
+    public onCollisionSolved(result: CollisionResult) {
         
     }
 }

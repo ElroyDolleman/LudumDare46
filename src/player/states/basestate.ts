@@ -12,7 +12,7 @@ class BaseState
     public update() {
     }
 
-    public onCollisionSolved() {
+    public onCollisionSolved(result: CollisionResult) {
 
     }
 }

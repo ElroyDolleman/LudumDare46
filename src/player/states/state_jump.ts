@@ -10,7 +10,7 @@ class JumpState extends AirborneState
     public update() {
     }
 
-    public onCollisionSolved() {
+    public onCollisionSolved(result: CollisionResult) {
         
     }
 }

@@ -5,12 +5,13 @@ class IdleState extends GroundedState
     }
 
     public enter() {
+        this.player.speed.y = 48;
     }
  
     public update() {
     }
 
-    public onCollisionSolved() {
+    public onCollisionSolved(result: CollisionResult) {
         
     }
 }
