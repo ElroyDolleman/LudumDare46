@@ -11,6 +11,8 @@ class Player extends Actor
     public animator: PlayerAnimator;
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
+    public get bounceHitbox(): Phaser.Geom.Rectangle { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); };
+
     constructor() {
         super(new Phaser.Geom.Rectangle(16, 262, 10, 10));
         this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
@@ -38,6 +40,9 @@ class Player extends Actor
         this.currentState = newState;
         this.currentState.enter();
     }
+    public bounceOnHead() {
+        this.animator.squish(1, 0.75, 300);
+    }
 
     public onCollisionSolved(result: CollisionResult) {
         this.currentState.onCollisionSolved(result);
@@ -49,6 +54,6 @@ class Player extends Actor
     public drawHitbox() {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillRectShape(this.hitbox);
+        this.hitboxGraphics.fillRectShape(this.bounceHitbox);
     }
 }

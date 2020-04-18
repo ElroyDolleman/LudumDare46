@@ -5,6 +5,10 @@ class CollisionResult
     onRight: boolean = false;
     onBottom: boolean = false;
     tiles: Tile[] = [];
+    prevTop: number = 0;
+    prevLeft: number = 0;
+    prevRight: number = 0;
+    prevBottom: number = 0;
 }
 
 class CollisionManager
@@ -19,7 +23,10 @@ class CollisionManager
         
         let result: CollisionResult = new CollisionResult();
         let tiles = this.currentLevel.map.getTilesFromRect(actor.calculateNextHitbox(), 2);
-        let prevBottomPos = actor.hitbox.bottom;// Used for semisold
+        result.prevTop = actor.hitbox.top;
+        result.prevLeft = actor.hitbox.left;
+        result.prevRight = actor.hitbox.right;
+        result.prevBottom = actor.hitbox.bottom;
         
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
@@ -46,7 +53,7 @@ class CollisionManager
                     continue;
                 }
                 if (tiles[i].isSemisolid) {
-                    if (this.isFallingThroughSemisolid(tiles[i], prevBottomPos, actor.hitbox.bottom)) {
+                    if (this.isFallingThroughSemisolid(tiles[i], result.prevBottom, actor.hitbox.bottom)) {
                         result.onBottom = true;
                         actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
                     }

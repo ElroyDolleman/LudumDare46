@@ -1,17 +1,19 @@
 /// <reference path="../entities/actor.ts"/>
 class Baby extends Actor
 {
+    public mommy: Player;
     public animator: BabyAnimator;
-    public direction: number = 1;
 
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
     public currentState: BabyBaseState;
     public walkState: BabyWalkState;
+    public waitState: BabyWaitState;
     public airState: BabyAirborneState;
 
-    constructor() {
+    constructor(mommy: Player) {
         super(new Phaser.Geom.Rectangle(16, 152, 5, 5));
+        this.mommy = mommy;
         this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
 
         this.animator = new BabyAnimator(this);
@@ -22,6 +24,7 @@ class Baby extends Actor
 
     private createStates() {
         this.walkState = new BabyWalkState(this);
+        this.waitState = new BabyWaitState(this);
         this.airState = new BabyAirborneState(this);
     }
 
@@ -34,17 +37,24 @@ class Baby extends Actor
         this.currentState = newState;
         this.currentState.enter();
     }
+    public wait() {
+        this.changeState(this.waitState);
+    }
 
     public onCollisionSolved(result: CollisionResult) {
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
 
-        this.drawHitbox();
+        //this.drawHitbox();
     }
 
     public drawHitbox() {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
         this.hitboxGraphics.fillRectShape(this.hitbox);
+    }
+
+    public getTarget() {
+        return this.mommy;
     }
 }

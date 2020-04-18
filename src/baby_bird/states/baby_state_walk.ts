@@ -1,5 +1,5 @@
-/// <reference path="baby_basestate.ts"/>
-class BabyWalkState extends BabyBaseState
+/// <reference path="baby_state_grounded.ts"/>
+class BabyWalkState extends BabyGroundedState
 {
     constructor(baby: Baby) {
         super(baby);
@@ -21,24 +21,6 @@ class BabyWalkState extends BabyBaseState
         }
         if (!this.hasGroundUnderneath(result.tiles)) {
             this.baby.changeState(this.baby.airState);
-        }
-    }
-
-    protected hasGroundUnderneath(tiles: Tile[]):boolean {
-        for (let i = 0; i < tiles.length; i++) {
-            if (!tiles[i].canStandOn) {
-                continue;
-            }
-            if (this.isStandingOnTile(tiles[i])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    protected isStandingOnTile(tile: Tile):boolean {
-        if (tile.hitbox.top == this.baby.hitbox.bottom) {
-            return this.baby.hitbox.right > tile.hitbox.left && this.baby.hitbox.left < tile.hitbox.right;
         }
     }
 }

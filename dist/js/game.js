@@ -29,7 +29,7 @@ var PlaygroundScene = /** @class */ (function (_super) {
         this.inputManager = new InputManager(this);
         this.level = this.levelLoader.load('playground01');
         this.player = new Player();
-        this.baby = new Baby();
+        this.baby = new Baby(this.player);
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
     };
@@ -95,9 +95,9 @@ var Actor = /** @class */ (function () {
 /// <reference path="../entities/actor.ts"/>
 var Baby = /** @class */ (function (_super) {
     __extends(Baby, _super);
-    function Baby() {
+    function Baby(mommy) {
         var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 152, 5, 5)) || this;
-        _this.direction = 1;
+        _this.mommy = mommy;
         _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
         _this.animator = new BabyAnimator(_this);
         _this.createStates();
@@ -106,6 +106,7 @@ var Baby = /** @class */ (function (_super) {
     }
     Baby.prototype.createStates = function () {
         this.walkState = new BabyWalkState(this);
+        this.waitState = new BabyWaitState(this);
         this.airState = new BabyAirborneState(this);
     };
     Baby.prototype.update = function () {
@@ -116,15 +117,21 @@ var Baby = /** @class */ (function (_super) {
         this.currentState = newState;
         this.currentState.enter();
     };
+    Baby.prototype.wait = function () {
+        this.changeState(this.waitState);
+    };
     Baby.prototype.onCollisionSolved = function (result) {
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
-        this.drawHitbox();
+        //this.drawHitbox();
     };
     Baby.prototype.drawHitbox = function () {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
         this.hitboxGraphics.fillRectShape(this.hitbox);
+    };
+    Baby.prototype.getTarget = function () {
+        return this.mommy;
     };
     return Baby;
 }(Actor));
@@ -236,8 +243,11 @@ var BabyAnimator = /** @class */ (function (_super) {
 var BabyStats;
 (function (BabyStats) {
     BabyStats.DefaultWalkSpeed = 32;
-    BabyStats.DefaultGravity = 20;
-    BabyStats.DefaultMaxFallSpeed = 200;
+    BabyStats.DefaultGravity = 12;
+    BabyStats.DefaultMaxFallSpeed = 320;
+    BabyStats.DefaultWaitingTime = 2000;
+    BabyStats.MommyBouncePower = 168;
+    BabyStats.DeadFallSpeed = BabyStats.DefaultMaxFallSpeed;
 })(BabyStats || (BabyStats = {}));
 var BabyBaseState = /** @class */ (function () {
     function BabyBaseState(baby) {
@@ -262,10 +272,26 @@ var BabyAirborneState = /** @class */ (function (_super) {
         this.updateGravity();
     };
     BabyAirborneState.prototype.onCollisionSolved = function (result) {
-        if (result.onBottom) {
-            this.baby.speed.y = 0;
-            this.baby.changeState(this.baby.walkState);
+        if (Phaser.Geom.Rectangle.Overlaps(this.baby.hitbox, this.baby.mommy.bounceHitbox) && this.baby.speed.y > 0) {
+            this.mommyBounce();
         }
+        else if (result.onBottom) {
+            if (this.baby.speed.y >= BabyStats.DeadFallSpeed) {
+                console.log("BABY DIED", this.baby.speed.y);
+                //TODO: Change to dead state
+                this.baby.speed.y = 0;
+                this.baby.changeState(this.baby.walkState);
+            }
+            else {
+                console.log("survived", this.baby.speed.y);
+                this.baby.speed.y = 0;
+                this.baby.changeState(this.baby.walkState);
+            }
+        }
+    };
+    BabyAirborneState.prototype.mommyBounce = function () {
+        this.baby.speed.y = -BabyStats.MommyBouncePower;
+        this.baby.mommy.bounceOnHead();
     };
     BabyAirborneState.prototype.updateGravity = function (gravity, maxFallSpeed) {
         if (gravity === void 0) { gravity = BabyStats.DefaultGravity; }
@@ -276,7 +302,57 @@ var BabyAirborneState = /** @class */ (function (_super) {
     };
     return BabyAirborneState;
 }(BabyBaseState));
-/// <reference path="baby_basestate.ts"/>
+var BabyGroundedState = /** @class */ (function (_super) {
+    __extends(BabyGroundedState, _super);
+    function BabyGroundedState(baby) {
+        return _super.call(this, baby) || this;
+    }
+    BabyGroundedState.prototype.enter = function () {
+    };
+    BabyGroundedState.prototype.update = function () {
+    };
+    BabyGroundedState.prototype.onCollisionSolved = function (result) {
+    };
+    BabyGroundedState.prototype.hasGroundUnderneath = function (tiles) {
+        for (var i = 0; i < tiles.length; i++) {
+            if (!tiles[i].canStandOn) {
+                continue;
+            }
+            if (this.isStandingOnTile(tiles[i])) {
+                return true;
+            }
+        }
+        return false;
+    };
+    BabyGroundedState.prototype.isStandingOnTile = function (tile) {
+        if (tile.hitbox.top == this.baby.hitbox.bottom) {
+            return this.baby.hitbox.right > tile.hitbox.left && this.baby.hitbox.left < tile.hitbox.right;
+        }
+    };
+    return BabyGroundedState;
+}(BabyBaseState));
+var BabyWaitState = /** @class */ (function (_super) {
+    __extends(BabyWaitState, _super);
+    function BabyWaitState(baby) {
+        return _super.call(this, baby) || this;
+    }
+    BabyWaitState.prototype.enter = function () {
+        var _this = this;
+        this.baby.speed.x = 0;
+        setTimeout(function () {
+            _this.baby.changeState(_this.baby.walkState);
+        }, BabyStats.DefaultWaitingTime);
+    };
+    BabyWaitState.prototype.update = function () {
+    };
+    BabyWaitState.prototype.onCollisionSolved = function (result) {
+        if (!this.hasGroundUnderneath(result.tiles)) {
+            this.baby.changeState(this.baby.airState);
+        }
+    };
+    return BabyWaitState;
+}(BabyGroundedState));
+/// <reference path="baby_state_grounded.ts"/>
 var BabyWalkState = /** @class */ (function (_super) {
     __extends(BabyWalkState, _super);
     function BabyWalkState(baby) {
@@ -298,24 +374,8 @@ var BabyWalkState = /** @class */ (function (_super) {
             this.baby.changeState(this.baby.airState);
         }
     };
-    BabyWalkState.prototype.hasGroundUnderneath = function (tiles) {
-        for (var i = 0; i < tiles.length; i++) {
-            if (!tiles[i].canStandOn) {
-                continue;
-            }
-            if (this.isStandingOnTile(tiles[i])) {
-                return true;
-            }
-        }
-        return false;
-    };
-    BabyWalkState.prototype.isStandingOnTile = function (tile) {
-        if (tile.hitbox.top == this.baby.hitbox.bottom) {
-            return this.baby.hitbox.right > tile.hitbox.left && this.baby.hitbox.left < tile.hitbox.right;
-        }
-    };
     return BabyWalkState;
-}(BabyBaseState));
+}(BabyGroundedState));
 var Level = /** @class */ (function () {
     function Level(map) {
         this.collisionManager = new CollisionManager(this);
@@ -487,6 +547,12 @@ var Player = /** @class */ (function (_super) {
         _this.changeState(_this.idleState);
         return _this;
     }
+    Object.defineProperty(Player.prototype, "bounceHitbox", {
+        get: function () { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); },
+        enumerable: true,
+        configurable: true
+    });
+    ;
     Player.prototype.createStates = function () {
         this.idleState = new IdleState(this);
         this.runState = new RunState(this);
@@ -502,6 +568,9 @@ var Player = /** @class */ (function (_super) {
         this.currentState = newState;
         this.currentState.enter();
     };
+    Player.prototype.bounceOnHead = function () {
+        this.animator.squish(1, 0.75, 300);
+    };
     Player.prototype.onCollisionSolved = function (result) {
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
@@ -510,7 +579,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.drawHitbox = function () {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillRectShape(this.hitbox);
+        this.hitboxGraphics.fillRectShape(this.bounceHitbox);
     };
     return Player;
 }(Actor));
@@ -801,6 +870,10 @@ var CollisionResult = /** @class */ (function () {
         this.onRight = false;
         this.onBottom = false;
         this.tiles = [];
+        this.prevTop = 0;
+        this.prevLeft = 0;
+        this.prevRight = 0;
+        this.prevBottom = 0;
     }
     return CollisionResult;
 }());
@@ -811,7 +884,10 @@ var CollisionManager = /** @class */ (function () {
     CollisionManager.prototype.moveActor = function (actor) {
         var result = new CollisionResult();
         var tiles = this.currentLevel.map.getTilesFromRect(actor.calculateNextHitbox(), 2);
-        var prevBottomPos = actor.hitbox.bottom; // Used for semisold
+        result.prevTop = actor.hitbox.top;
+        result.prevLeft = actor.hitbox.left;
+        result.prevRight = actor.hitbox.right;
+        result.prevBottom = actor.hitbox.bottom;
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
             for (var i = 0; i < tiles.length; i++) {
@@ -835,7 +911,7 @@ var CollisionManager = /** @class */ (function () {
                     continue;
                 }
                 if (tiles[i].isSemisolid) {
-                    if (this.isFallingThroughSemisolid(tiles[i], prevBottomPos, actor.hitbox.bottom)) {
+                    if (this.isFallingThroughSemisolid(tiles[i], result.prevBottom, actor.hitbox.bottom)) {
                         result.onBottom = true;
                         actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
                     }

@@ -23,7 +23,7 @@ class PlaygroundScene extends Phaser.Scene {
         this.level = this.levelLoader.load('playground01');
 
         this.player = new Player();
-        this.baby = new Baby();
+        this.baby = new Baby(this.player);
 
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
