@@ -1,10 +1,9 @@
-/// <reference path="../../util/animator.ts"/>
+/// <reference path="../util/animator.ts"/>
 class BabyAnimator extends Animator
 {
     constructor(baby: Baby) {
         super(Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key), baby);
         this.sprite.setOrigin(0.5, 1);
-        this.sprite.flipX = true;
         this.updatePosition();
 
         this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);

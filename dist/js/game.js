@@ -92,6 +92,230 @@ var Actor = /** @class */ (function () {
     };
     return Actor;
 }());
+/// <reference path="../entities/actor.ts"/>
+var Baby = /** @class */ (function (_super) {
+    __extends(Baby, _super);
+    function Baby() {
+        var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 152, 5, 5)) || this;
+        _this.direction = 1;
+        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        _this.animator = new BabyAnimator(_this);
+        _this.createStates();
+        _this.changeState(_this.walkState);
+        return _this;
+    }
+    Baby.prototype.createStates = function () {
+        this.walkState = new BabyWalkState(this);
+        this.airState = new BabyAirborneState(this);
+    };
+    Baby.prototype.update = function () {
+        this.currentState.update();
+        this.animator.update();
+    };
+    Baby.prototype.changeState = function (newState) {
+        this.currentState = newState;
+        this.currentState.enter();
+    };
+    Baby.prototype.onCollisionSolved = function (result) {
+        this.currentState.onCollisionSolved(result);
+        this.animator.updatePosition();
+        this.drawHitbox();
+    };
+    Baby.prototype.drawHitbox = function () {
+        this.hitboxGraphics.clear();
+        this.hitboxGraphics.depth = 10;
+        this.hitboxGraphics.fillRectShape(this.hitbox);
+    };
+    return Baby;
+}(Actor));
+var Animator = /** @class */ (function () {
+    function Animator(sprite, actor) {
+        this.currentSquish = { timer: 0, startTime: 0, reverseTime: 0, scaleX: 1, scaleY: 1 };
+        this.sprite = sprite;
+        this.actor = actor;
+    }
+    Object.defineProperty(Animator.prototype, "facingDirection", {
+        get: function () { return this.sprite.flipX ? -1 : 1; },
+        set: function (dir) { this.sprite.flipX = dir < 0; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Animator.prototype, "isSquishing", {
+        get: function () { return this.currentSquish.timer > 0; },
+        enumerable: true,
+        configurable: true
+    });
+    Animator.prototype.update = function () {
+        if (this.actor.speed.x > 0) {
+            this.sprite.flipX = false;
+        }
+        else if (this.actor.speed.x < 0) {
+            this.sprite.flipX = true;
+        }
+        if (this.isSquishing) {
+            this.updateSquish();
+        }
+    };
+    Animator.prototype.updatePosition = function () {
+        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
+    };
+    Animator.prototype.changeAnimation = function (key, isSingleFrame) {
+        if (isSingleFrame === void 0) { isSingleFrame = false; }
+        if (isSingleFrame) {
+            this.sprite.anims.stop();
+            this.sprite.setFrame(key);
+        }
+        else {
+            this.sprite.play(key);
+            this.setTimeScale(1);
+        }
+    };
+    Animator.prototype.setTimeScale = function (timeScale) {
+        this.sprite.anims.setTimeScale(timeScale);
+    };
+    Animator.prototype.createAnimation = function (key, texture, prefix, length, frameRate) {
+        if (frameRate === void 0) { frameRate = 16; }
+        var frameNames = Scenes.Current.anims.generateFrameNames(texture, {
+            prefix: prefix,
+            suffix: '.png',
+            end: length - 1,
+            zeroPad: 2
+        });
+        Scenes.Current.anims.create({
+            key: key,
+            frames: frameNames,
+            frameRate: frameRate,
+            repeat: -1,
+        });
+    };
+    Animator.prototype.squish = function (scaleX, scaleY, duration, reverseTime) {
+        this.currentSquish = {
+            timer: duration,
+            reverseTime: reverseTime == undefined ? duration / 2 : reverseTime,
+            startTime: duration,
+            scaleX: scaleX,
+            scaleY: scaleY
+        };
+    };
+    Animator.prototype.updateSquish = function () {
+        this.currentSquish.timer = Math.max(this.currentSquish.timer - GameTime.getElapsedMS(), 0);
+        var timeToReverse = this.currentSquish.startTime - this.currentSquish.reverseTime;
+        if (this.currentSquish.timer > timeToReverse) {
+            var t = 1 - (this.currentSquish.timer - timeToReverse) / this.currentSquish.reverseTime;
+            this.sprite.scaleX = Phaser.Math.Linear(1, this.currentSquish.scaleX, t);
+            this.sprite.scaleY = Phaser.Math.Linear(1, this.currentSquish.scaleY, t);
+        }
+        else {
+            var t = 1 - this.currentSquish.timer / timeToReverse;
+            this.sprite.scaleX = Phaser.Math.Linear(this.currentSquish.scaleX, 1, t);
+            this.sprite.scaleY = Phaser.Math.Linear(this.currentSquish.scaleY, 1, t);
+        }
+    };
+    return Animator;
+}());
+/// <reference path="../util/animator.ts"/>
+var BabyAnimator = /** @class */ (function (_super) {
+    __extends(BabyAnimator, _super);
+    function BabyAnimator(baby) {
+        var _this = _super.call(this, Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key), baby) || this;
+        _this.sprite.setOrigin(0.5, 1);
+        _this.updatePosition();
+        _this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);
+        _this.changeAnimation('walk');
+        return _this;
+    }
+    BabyAnimator.prototype.update = function () {
+        _super.prototype.update.call(this);
+    };
+    BabyAnimator.prototype.updatePosition = function () {
+        var extra = this.sprite.flipX ? 0 : 1;
+        this.sprite.setPosition(this.actor.hitbox.centerX - extra, this.actor.hitbox.bottom);
+    };
+    return BabyAnimator;
+}(Animator));
+var BabyStats;
+(function (BabyStats) {
+    BabyStats.DefaultWalkSpeed = 32;
+    BabyStats.DefaultGravity = 20;
+    BabyStats.DefaultMaxFallSpeed = 200;
+})(BabyStats || (BabyStats = {}));
+var BabyBaseState = /** @class */ (function () {
+    function BabyBaseState(baby) {
+        this.baby = baby;
+    }
+    BabyBaseState.prototype.enter = function () {
+    };
+    BabyBaseState.prototype.update = function () {
+    };
+    BabyBaseState.prototype.onCollisionSolved = function (result) {
+    };
+    return BabyBaseState;
+}());
+var BabyAirborneState = /** @class */ (function (_super) {
+    __extends(BabyAirborneState, _super);
+    function BabyAirborneState(baby) {
+        return _super.call(this, baby) || this;
+    }
+    BabyAirborneState.prototype.enter = function () {
+    };
+    BabyAirborneState.prototype.update = function () {
+        this.updateGravity();
+    };
+    BabyAirborneState.prototype.onCollisionSolved = function (result) {
+        if (result.onBottom) {
+            this.baby.speed.y = 0;
+            this.baby.changeState(this.baby.walkState);
+        }
+    };
+    BabyAirborneState.prototype.updateGravity = function (gravity, maxFallSpeed) {
+        if (gravity === void 0) { gravity = BabyStats.DefaultGravity; }
+        if (maxFallSpeed === void 0) { maxFallSpeed = BabyStats.DefaultMaxFallSpeed; }
+        if (this.baby.speed.y < maxFallSpeed) {
+            this.baby.speed.y = Math.min(this.baby.speed.y + gravity, maxFallSpeed);
+        }
+    };
+    return BabyAirborneState;
+}(BabyBaseState));
+/// <reference path="baby_basestate.ts"/>
+var BabyWalkState = /** @class */ (function (_super) {
+    __extends(BabyWalkState, _super);
+    function BabyWalkState(baby) {
+        return _super.call(this, baby) || this;
+    }
+    BabyWalkState.prototype.enter = function () {
+        this.baby.speed.x = BabyStats.DefaultWalkSpeed * this.baby.animator.facingDirection;
+    };
+    BabyWalkState.prototype.update = function () {
+    };
+    BabyWalkState.prototype.onCollisionSolved = function (result) {
+        if (result.onRight) {
+            this.baby.speed.x = -BabyStats.DefaultWalkSpeed;
+        }
+        else if (result.onLeft) {
+            this.baby.speed.x = BabyStats.DefaultWalkSpeed;
+        }
+        if (!this.hasGroundUnderneath(result.tiles)) {
+            this.baby.changeState(this.baby.airState);
+        }
+    };
+    BabyWalkState.prototype.hasGroundUnderneath = function (tiles) {
+        for (var i = 0; i < tiles.length; i++) {
+            if (!tiles[i].canStandOn) {
+                continue;
+            }
+            if (this.isStandingOnTile(tiles[i])) {
+                return true;
+            }
+        }
+        return false;
+    };
+    BabyWalkState.prototype.isStandingOnTile = function (tile) {
+        if (tile.hitbox.top == this.baby.hitbox.bottom) {
+            return this.baby.hitbox.right > tile.hitbox.left && this.baby.hitbox.left < tile.hitbox.right;
+        }
+    };
+    return BabyWalkState;
+}(BabyBaseState));
 var Level = /** @class */ (function () {
     function Level(map) {
         this.collisionManager = new CollisionManager(this);
@@ -290,91 +514,6 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(Actor));
-var Animator = /** @class */ (function () {
-    function Animator(sprite, actor) {
-        this.currentSquish = { timer: 0, startTime: 0, reverseTime: 0, scaleX: 1, scaleY: 1 };
-        this.sprite = sprite;
-        this.actor = actor;
-    }
-    Object.defineProperty(Animator.prototype, "facingDirection", {
-        get: function () { return this.sprite.flipX ? -1 : 1; },
-        set: function (dir) { this.sprite.flipX = dir < 0; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Animator.prototype, "isSquishing", {
-        get: function () { return this.currentSquish.timer > 0; },
-        enumerable: true,
-        configurable: true
-    });
-    Animator.prototype.update = function () {
-        if (this.actor.speed.x > 0) {
-            this.sprite.flipX = false;
-        }
-        else if (this.actor.speed.x < 0) {
-            this.sprite.flipX = true;
-        }
-        if (this.isSquishing) {
-            this.updateSquish();
-        }
-    };
-    Animator.prototype.updatePosition = function () {
-        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
-    };
-    Animator.prototype.changeAnimation = function (key, isSingleFrame) {
-        if (isSingleFrame === void 0) { isSingleFrame = false; }
-        if (isSingleFrame) {
-            this.sprite.anims.stop();
-            this.sprite.setFrame(key);
-        }
-        else {
-            this.sprite.play(key);
-            this.setTimeScale(1);
-        }
-    };
-    Animator.prototype.setTimeScale = function (timeScale) {
-        this.sprite.anims.setTimeScale(timeScale);
-    };
-    Animator.prototype.createAnimation = function (key, texture, prefix, length, frameRate) {
-        if (frameRate === void 0) { frameRate = 16; }
-        var frameNames = Scenes.Current.anims.generateFrameNames(texture, {
-            prefix: prefix,
-            suffix: '.png',
-            end: length - 1,
-            zeroPad: 2
-        });
-        Scenes.Current.anims.create({
-            key: key,
-            frames: frameNames,
-            frameRate: frameRate,
-            repeat: -1,
-        });
-    };
-    Animator.prototype.squish = function (scaleX, scaleY, duration, reverseTime) {
-        this.currentSquish = {
-            timer: duration,
-            reverseTime: reverseTime == undefined ? duration / 2 : reverseTime,
-            startTime: duration,
-            scaleX: scaleX,
-            scaleY: scaleY
-        };
-    };
-    Animator.prototype.updateSquish = function () {
-        this.currentSquish.timer = Math.max(this.currentSquish.timer - GameTime.getElapsedMS(), 0);
-        var timeToReverse = this.currentSquish.startTime - this.currentSquish.reverseTime;
-        if (this.currentSquish.timer > timeToReverse) {
-            var t = 1 - (this.currentSquish.timer - timeToReverse) / this.currentSquish.reverseTime;
-            this.sprite.scaleX = Phaser.Math.Linear(1, this.currentSquish.scaleX, t);
-            this.sprite.scaleY = Phaser.Math.Linear(1, this.currentSquish.scaleY, t);
-        }
-        else {
-            var t = 1 - this.currentSquish.timer / timeToReverse;
-            this.sprite.scaleX = Phaser.Math.Linear(this.currentSquish.scaleX, 1, t);
-            this.sprite.scaleY = Phaser.Math.Linear(this.currentSquish.scaleY, 1, t);
-        }
-    };
-    return Animator;
-}());
 /// <reference path="../util/animator.ts"/>
 var PlayerAnimations;
 /// <reference path="../util/animator.ts"/>
@@ -414,51 +553,6 @@ var PlayerStats;
     PlayerStats.FlyingGravity = PlayerStats.DefaultGravity * 0.5;
     PlayerStats.FlyingMaxFallSpeed = PlayerStats.DefaultMaxFallSpeed * 0.5;
 })(PlayerStats || (PlayerStats = {}));
-var Baby = /** @class */ (function (_super) {
-    __extends(Baby, _super);
-    function Baby() {
-        var _this = _super.call(this, new Phaser.Geom.Rectangle(242, 152, 5, 5)) || this;
-        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
-        _this.animator = new BabyAnimator(_this);
-        _this.speed.x = -48;
-        _this.speed.y = 48;
-        return _this;
-    }
-    Baby.prototype.update = function () {
-        this.animator.update();
-        this.drawHitbox();
-    };
-    Baby.prototype.onCollisionSolved = function (result) {
-        this.animator.updatePosition();
-    };
-    Baby.prototype.drawHitbox = function () {
-        this.hitboxGraphics.clear();
-        this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillRectShape(this.hitbox);
-    };
-    return Baby;
-}(Actor));
-/// <reference path="../../util/animator.ts"/>
-var BabyAnimator = /** @class */ (function (_super) {
-    __extends(BabyAnimator, _super);
-    function BabyAnimator(baby) {
-        var _this = _super.call(this, Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key), baby) || this;
-        _this.sprite.setOrigin(0.5, 1);
-        _this.sprite.flipX = true;
-        _this.updatePosition();
-        _this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);
-        _this.changeAnimation('walk');
-        return _this;
-    }
-    BabyAnimator.prototype.update = function () {
-        _super.prototype.update.call(this);
-    };
-    BabyAnimator.prototype.updatePosition = function () {
-        var extra = this.sprite.flipX ? 0 : 1;
-        this.sprite.setPosition(this.actor.hitbox.centerX - extra, this.actor.hitbox.bottom);
-    };
-    return BabyAnimator;
-}(Animator));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
         this.player = player;
