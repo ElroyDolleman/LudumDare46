@@ -4,8 +4,9 @@ module Inputs
     export let Left: Phaser.Input.Keyboard.Key;
     export let Down: Phaser.Input.Keyboard.Key;
     export let Right: Phaser.Input.Keyboard.Key;
+    export let Yell: Phaser.Input.Keyboard.Key;
     
-    export let Jump: { key: Phaser.Input.Keyboard.Key, heldDownFrames: number };
+    export let Jump: { key: Phaser.Input.Keyboard.Key, heldDownFrames: number };    
 }
 
 class InputManager
@@ -15,11 +16,12 @@ class InputManager
         Inputs.Left = scene.input.keyboard.addKey('left');
         Inputs.Down = scene.input.keyboard.addKey('down');
         Inputs.Right = scene.input.keyboard.addKey('right');
+
+        Inputs.Yell = scene.input.keyboard.addKey('x');
         Inputs.Jump = { key: scene.input.keyboard.addKey('z'), heldDownFrames: 0 };
     }
 
-    public update()
-    {
+    public update() {
         if (Inputs.Jump.key.isDown) {
             Inputs.Jump.heldDownFrames++;
         }

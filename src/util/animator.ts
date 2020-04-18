@@ -42,7 +42,7 @@ class Animator
     public setTimeScale(timeScale: number) {
         this.sprite.anims.setTimeScale(timeScale);
     }
-    protected createAnimation(key: string, texture: string, prefix: string, length: number, frameRate: number = 16) {
+    protected createAnimation(key: string, texture: string, prefix: string, length: number, frameRate: number = 16, repeat: number = -1) {
         let frameNames = Scenes.Current.anims.generateFrameNames(texture, { 
             prefix: prefix,
             suffix: '.png',
@@ -53,7 +53,7 @@ class Animator
             key: key,
             frames: frameNames,
             frameRate: frameRate,
-            repeat: -1,
+            repeat: repeat,
         });
     }
 

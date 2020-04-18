@@ -7,11 +7,20 @@ class Player extends Actor
     public fallState: FallState;
     public jumpState: JumpState;
     public flyState: FlyState;
+    public yellState: YellState;
 
+    public baby: Baby;
     public animator: PlayerAnimator;
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
     public get bounceHitbox(): Phaser.Geom.Rectangle { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); };
+    public get yellArea(): Phaser.Geom.Circle { 
+        return new Phaser.Geom.Circle(
+            this.hitbox.centerX + (18 * this.animator.facingDirection), 
+            this.hitbox.centerY, 
+            PlayerStats.YellRadius
+        ); 
+    }
 
     constructor() {
         super(new Phaser.Geom.Rectangle(16, 262, 10, 10));
@@ -29,6 +38,7 @@ class Player extends Actor
         this.fallState = new FallState(this);
         this.jumpState = new JumpState(this);
         this.flyState = new FlyState(this);
+        this.yellState = new YellState(this);
     }
 
     public update() {
@@ -54,6 +64,6 @@ class Player extends Actor
     public drawHitbox() {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillRectShape(this.bounceHitbox);
+        this.hitboxGraphics.fillCircleShape(this.yellArea);
     }
 }

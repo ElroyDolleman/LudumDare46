@@ -10,4 +10,6 @@ module PlayerStats
     export const FlyPower = 128;
     export const FlyingGravity = DefaultGravity * 0.5;
     export const FlyingMaxFallSpeed = DefaultMaxFallSpeed * 0.5;
+
+    export const YellRadius = 18;
 }

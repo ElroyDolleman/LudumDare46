@@ -37,8 +37,17 @@ class Baby extends Actor
         this.currentState = newState;
         this.currentState.enter();
     }
-    public wait() {
-        this.changeState(this.waitState);
+    public wait(faceMommy: boolean = false) {
+        if (this.currentState == this.waitState) {
+            this.waitState.timer = 0;
+        }
+        else if (this.currentState == this.walkState) {
+            this.changeState(this.waitState);
+        }
+        if (faceMommy && this.currentState == this.waitState) {
+            let direction = MathHelper.sign(this.mommy.hitbox.centerX - this.hitbox.centerX);
+            this.animator.facingDirection = direction;
+        }
     }
 
     public onCollisionSolved(result: CollisionResult) {

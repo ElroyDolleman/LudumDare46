@@ -30,6 +30,7 @@ var PlaygroundScene = /** @class */ (function (_super) {
         this.level = this.levelLoader.load('playground01');
         this.player = new Player();
         this.baby = new Baby(this.player);
+        this.player.baby = this.baby;
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
     };
@@ -117,8 +118,18 @@ var Baby = /** @class */ (function (_super) {
         this.currentState = newState;
         this.currentState.enter();
     };
-    Baby.prototype.wait = function () {
-        this.changeState(this.waitState);
+    Baby.prototype.wait = function (faceMommy) {
+        if (faceMommy === void 0) { faceMommy = false; }
+        if (this.currentState == this.waitState) {
+            this.waitState.timer = 0;
+        }
+        else if (this.currentState == this.walkState) {
+            this.changeState(this.waitState);
+        }
+        if (faceMommy && this.currentState == this.waitState) {
+            var direction = MathHelper.sign(this.mommy.hitbox.centerX - this.hitbox.centerX);
+            this.animator.facingDirection = direction;
+        }
     };
     Baby.prototype.onCollisionSolved = function (result) {
         this.currentState.onCollisionSolved(result);
@@ -180,8 +191,9 @@ var Animator = /** @class */ (function () {
     Animator.prototype.setTimeScale = function (timeScale) {
         this.sprite.anims.setTimeScale(timeScale);
     };
-    Animator.prototype.createAnimation = function (key, texture, prefix, length, frameRate) {
+    Animator.prototype.createAnimation = function (key, texture, prefix, length, frameRate, repeat) {
         if (frameRate === void 0) { frameRate = 16; }
+        if (repeat === void 0) { repeat = -1; }
         var frameNames = Scenes.Current.anims.generateFrameNames(texture, {
             prefix: prefix,
             suffix: '.png',
@@ -192,7 +204,7 @@ var Animator = /** @class */ (function () {
             key: key,
             frames: frameNames,
             frameRate: frameRate,
-            repeat: -1,
+            repeat: repeat,
         });
     };
     Animator.prototype.squish = function (scaleX, scaleY, duration, reverseTime) {
@@ -267,6 +279,7 @@ var BabyAirborneState = /** @class */ (function (_super) {
         return _super.call(this, baby) || this;
     }
     BabyAirborneState.prototype.enter = function () {
+        this.baby.animator.changeAnimation('babybird_walk_00.png', true);
     };
     BabyAirborneState.prototype.update = function () {
         this.updateGravity();
@@ -337,13 +350,16 @@ var BabyWaitState = /** @class */ (function (_super) {
         return _super.call(this, baby) || this;
     }
     BabyWaitState.prototype.enter = function () {
-        var _this = this;
+        this.baby.animator.changeAnimation('babybird_walk_00.png', true);
         this.baby.speed.x = 0;
-        setTimeout(function () {
-            _this.baby.changeState(_this.baby.walkState);
-        }, BabyStats.DefaultWaitingTime);
+        this.waitTime = BabyStats.DefaultWaitingTime;
+        this.timer = 0;
     };
     BabyWaitState.prototype.update = function () {
+        this.timer += GameTime.getElapsedMS();
+        if (this.timer >= this.waitTime) {
+            this.baby.changeState(this.baby.walkState);
+        }
     };
     BabyWaitState.prototype.onCollisionSolved = function (result) {
         if (!this.hasGroundUnderneath(result.tiles)) {
@@ -359,6 +375,7 @@ var BabyWalkState = /** @class */ (function (_super) {
         return _super.call(this, baby) || this;
     }
     BabyWalkState.prototype.enter = function () {
+        this.baby.animator.changeAnimation('walk');
         this.baby.speed.x = BabyStats.DefaultWalkSpeed * this.baby.animator.facingDirection;
     };
     BabyWalkState.prototype.update = function () {
@@ -553,12 +570,20 @@ var Player = /** @class */ (function (_super) {
         configurable: true
     });
     ;
+    Object.defineProperty(Player.prototype, "yellArea", {
+        get: function () {
+            return new Phaser.Geom.Circle(this.hitbox.centerX + (18 * this.animator.facingDirection), this.hitbox.centerY, PlayerStats.YellRadius);
+        },
+        enumerable: true,
+        configurable: true
+    });
     Player.prototype.createStates = function () {
         this.idleState = new IdleState(this);
         this.runState = new RunState(this);
         this.fallState = new FallState(this);
         this.jumpState = new JumpState(this);
         this.flyState = new FlyState(this);
+        this.yellState = new YellState(this);
     };
     Player.prototype.update = function () {
         this.currentState.update();
@@ -579,7 +604,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.drawHitbox = function () {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillRectShape(this.bounceHitbox);
+        this.hitboxGraphics.fillCircleShape(this.yellArea);
     };
     return Player;
 }(Actor));
@@ -592,6 +617,7 @@ var PlayerAnimations;
     PlayerAnimations.Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
     PlayerAnimations.Run = { key: 'run', isSingleFrame: false };
     PlayerAnimations.Fly = { key: 'fly', isSingleFrame: false };
+    PlayerAnimations.Yell = { key: 'yell', isSingleFrame: false };
 })(PlayerAnimations || (PlayerAnimations = {}));
 var PlayerAnimator = /** @class */ (function (_super) {
     __extends(PlayerAnimator, _super);
@@ -601,6 +627,7 @@ var PlayerAnimator = /** @class */ (function (_super) {
         _this.updatePosition();
         _this.createAnimation('run', 'player', 'playerbird_walk_', 3);
         _this.createAnimation('fly', 'player', 'playerbird_fly_', 3);
+        _this.createAnimation('yell', 'player', 'playerbird_yell_', 3, 12, 1);
         return _this;
     }
     PlayerAnimator.prototype.update = function () {
@@ -621,6 +648,7 @@ var PlayerStats;
     PlayerStats.FlyPower = 128;
     PlayerStats.FlyingGravity = PlayerStats.DefaultGravity * 0.5;
     PlayerStats.FlyingMaxFallSpeed = PlayerStats.DefaultMaxFallSpeed * 0.5;
+    PlayerStats.YellRadius = 18;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
@@ -765,6 +793,10 @@ var GroundedState = /** @class */ (function (_super) {
             this.player.speed.y = -PlayerStats.DefaultJumpPower;
             this.player.changeState(this.player.jumpState);
         }
+        else if (Phaser.Input.Keyboard.JustDown(Inputs.Yell)) {
+            this.player.speed.x = 0;
+            this.player.changeState(this.player.yellState);
+        }
     };
     GroundedState.prototype.onCollisionSolved = function (result) {
         if (!this.hasGroundUnderneath(result.tiles)) {
@@ -862,6 +894,26 @@ var RunState = /** @class */ (function (_super) {
         _super.prototype.onCollisionSolved.call(this, result);
     };
     return RunState;
+}(GroundedState));
+var YellState = /** @class */ (function (_super) {
+    __extends(YellState, _super);
+    function YellState(player) {
+        return _super.call(this, player) || this;
+    }
+    YellState.prototype.enter = function () {
+        this.player.animator.changeAnimation(PlayerAnimations.Yell);
+    };
+    YellState.prototype.update = function () {
+        if (!this.player.animator.sprite.anims.isPlaying) {
+            this.player.changeState(this.player.idleState);
+        }
+        if (Phaser.Geom.Intersects.CircleToRectangle(this.player.yellArea, this.player.baby.hitbox)) {
+            this.player.baby.wait(true);
+        }
+    };
+    YellState.prototype.onCollisionSolved = function (result) {
+    };
+    return YellState;
 }(GroundedState));
 var CollisionResult = /** @class */ (function () {
     function CollisionResult() {
@@ -988,6 +1040,7 @@ var InputManager = /** @class */ (function () {
         Inputs.Left = scene.input.keyboard.addKey('left');
         Inputs.Down = scene.input.keyboard.addKey('down');
         Inputs.Right = scene.input.keyboard.addKey('right');
+        Inputs.Yell = scene.input.keyboard.addKey('x');
         Inputs.Jump = { key: scene.input.keyboard.addKey('z'), heldDownFrames: 0 };
     }
     InputManager.prototype.update = function () {

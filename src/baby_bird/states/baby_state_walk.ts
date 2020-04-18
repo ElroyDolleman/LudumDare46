@@ -6,10 +6,12 @@ class BabyWalkState extends BabyGroundedState
     }
 
     public enter() {
+        this.baby.animator.changeAnimation('walk');
         this.baby.speed.x = BabyStats.DefaultWalkSpeed * this.baby.animator.facingDirection;
     }
 
     public update() {
+        
     }
 
     public onCollisionSolved(result: CollisionResult) {

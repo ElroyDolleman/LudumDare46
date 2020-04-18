@@ -13,6 +13,10 @@ class GroundedState extends BaseState
             this.player.speed.y = -PlayerStats.DefaultJumpPower;
             this.player.changeState(this.player.jumpState);
         }
+        else if (Phaser.Input.Keyboard.JustDown(Inputs.Yell)) {
+            this.player.speed.x = 0;
+            this.player.changeState(this.player.yellState);
+        }
     }
 
     public onCollisionSolved(result: CollisionResult) {

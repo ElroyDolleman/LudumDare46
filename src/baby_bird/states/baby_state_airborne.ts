@@ -5,6 +5,7 @@ class BabyAirborneState extends BabyBaseState
     }
 
     public enter() {
+        this.baby.animator.changeAnimation('babybird_walk_00.png', true);
     }
 
     public update() {
