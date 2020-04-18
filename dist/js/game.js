@@ -22,11 +22,12 @@ var PlaygroundScene = /** @class */ (function (_super) {
         this.load.atlas('player', 'assets/player.png', 'assets/player.json');
     };
     PlaygroundScene.prototype.create = function () {
-        CurrentGameScene = this;
+        Scenes.Current = this;
         this.player = new Player();
     };
     PlaygroundScene.prototype.update = function (time, delta) {
-        this.player.update(time, delta);
+        this.player.update();
+        this.player.onCollisionSolved();
     };
     return PlaygroundScene;
 }(Phaser.Scene));
@@ -44,36 +45,102 @@ var config = {
     scene: [PlaygroundScene],
 };
 var game = new Phaser.Game(config);
-var Player = /** @class */ (function () {
-    function Player() {
-        this.animator = new PlayerAnimator(this);
+var Actor = /** @class */ (function () {
+    function Actor(hitbox) {
+        this.speed = new Phaser.Math.Vector2();
+        this.hitbox = hitbox;
     }
-    Player.prototype.update = function (time, delta) {
-        this.animator.update(time, delta);
+    Object.defineProperty(Actor.prototype, "x", {
+        get: function () { return this.hitbox.x; },
+        set: function (x) { this.hitbox.x = x; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Actor.prototype, "y", {
+        get: function () { return this.hitbox.y; },
+        set: function (y) { this.hitbox.y = y; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Actor.prototype, "position", {
+        get: function () { return new Phaser.Math.Vector2(this.x, this.y); },
+        enumerable: true,
+        configurable: true
+    });
+    Actor.prototype.update = function () {
+    };
+    Actor.prototype.moveHorizontal = function () {
+        this.x += this.speed.x * GameTime.getElapsed();
+    };
+    Actor.prototype.moveVertical = function () {
+        this.y += this.speed.y * GameTime.getElapsed();
+    };
+    Actor.prototype.onCollisionSolved = function () {
+    };
+    Actor.prototype.calculateNextHitbox = function () {
+        return new Phaser.Geom.Rectangle(this.x + this.speed.x * GameTime.getElapsed(), this.y + this.speed.y * GameTime.getElapsed(), this.hitbox.width, this.hitbox.height);
+    };
+    return Actor;
+}());
+/// <reference path="../entities/actor.ts"/>
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player() {
+        var _this = _super.call(this, new Phaser.Geom.Rectangle(100, 100, 14, 10)) || this;
+        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        _this.createStates();
+        _this.changeState(_this.idleState);
+        _this.animator = new PlayerAnimator(_this);
+        return _this;
+    }
+    Player.prototype.createStates = function () {
+        this.idleState = new IdleState(this);
+        this.runState = new RunState(this);
+        this.fallState = new FallState(this);
+        this.jumpState = new JumpState(this);
+    };
+    Player.prototype.update = function () {
+        this.currentState.update();
+        this.animator.update();
+    };
+    Player.prototype.changeState = function (newState) {
+        this.currentState = newState;
+        this.currentState.enter();
+    };
+    Player.prototype.onCollisionSolved = function () {
+        this.animator.updatePosition();
+        this.drawHitbox();
+    };
+    Player.prototype.drawHitbox = function () {
+        this.hitboxGraphics.clear();
+        this.hitboxGraphics.depth = 10;
+        this.hitboxGraphics.fillRectShape(this.hitbox);
     };
     return Player;
-}());
+}(Actor));
 var PlayerAnimator = /** @class */ (function () {
     function PlayerAnimator(player) {
         this.player = player;
-        this.sprite = CurrentGameScene.add.sprite(100, 100, 'player', 'playerbird_walk_00.png');
+        this.sprite = Scenes.Current.add.sprite(0, 0, 'player', 'playerbird_walk_00.png');
+        this.sprite.setOrigin(0.5, 1);
+        this.updatePosition();
         this.createAnimation('run', 'playerbird_walk_', 2);
         this.sprite.play('run');
     }
-    PlayerAnimator.prototype.update = function (time, delta) {
+    PlayerAnimator.prototype.update = function () {
     };
     PlayerAnimator.prototype.updatePosition = function () {
-        this.sprite.setPosition(0, 0);
+        this.sprite.setPosition(this.player.hitbox.centerX, this.player.hitbox.bottom);
     };
     PlayerAnimator.prototype.createAnimation = function (key, prefix, length, frameRate) {
         if (frameRate === void 0) { frameRate = 16; }
-        var frameNames = CurrentGameScene.anims.generateFrameNames('player', {
+        var frameNames = Scenes.Current.anims.generateFrameNames('player', {
             prefix: prefix,
             suffix: '.png',
             end: length,
             zeroPad: 2
         });
-        CurrentGameScene.anims.create({
+        Scenes.Current.anims.create({
             key: key,
             frames: frameNames,
             frameRate: frameRate,
@@ -88,7 +155,7 @@ var BaseState = /** @class */ (function () {
     }
     BaseState.prototype.enter = function () {
     };
-    BaseState.prototype.update = function (time, delta) {
+    BaseState.prototype.update = function () {
     };
     BaseState.prototype.onCollisionSolved = function () {
     };
@@ -101,7 +168,7 @@ var AirborneState = /** @class */ (function (_super) {
     }
     AirborneState.prototype.enter = function () {
     };
-    AirborneState.prototype.update = function (time, delta) {
+    AirborneState.prototype.update = function () {
     };
     AirborneState.prototype.onCollisionSolved = function () {
     };
@@ -114,7 +181,7 @@ var FallState = /** @class */ (function (_super) {
     }
     FallState.prototype.enter = function () {
     };
-    FallState.prototype.update = function (time, delta) {
+    FallState.prototype.update = function () {
     };
     FallState.prototype.onCollisionSolved = function () {
     };
@@ -127,7 +194,7 @@ var GroundedState = /** @class */ (function (_super) {
     }
     GroundedState.prototype.enter = function () {
     };
-    GroundedState.prototype.update = function (time, delta) {
+    GroundedState.prototype.update = function () {
     };
     GroundedState.prototype.onCollisionSolved = function () {
     };
@@ -140,7 +207,7 @@ var IdleState = /** @class */ (function (_super) {
     }
     IdleState.prototype.enter = function () {
     };
-    IdleState.prototype.update = function (time, delta) {
+    IdleState.prototype.update = function () {
     };
     IdleState.prototype.onCollisionSolved = function () {
     };
@@ -153,7 +220,7 @@ var JumpState = /** @class */ (function (_super) {
     }
     JumpState.prototype.enter = function () {
     };
-    JumpState.prototype.update = function (time, delta) {
+    JumpState.prototype.update = function () {
     };
     JumpState.prototype.onCollisionSolved = function () {
     };
@@ -166,11 +233,51 @@ var RunState = /** @class */ (function (_super) {
     }
     RunState.prototype.enter = function () {
     };
-    RunState.prototype.update = function (time, delta) {
+    RunState.prototype.update = function () {
     };
     RunState.prototype.onCollisionSolved = function () {
     };
     return RunState;
 }(GroundedState));
-var CurrentGameScene;
+var GameTime;
+(function (GameTime) {
+    GameTime.fps = 60;
+    GameTime.frame = 0;
+    function getElapsed() {
+        return 1 / this.fps;
+    }
+    GameTime.getElapsed = getElapsed;
+    function getElapsedMS() {
+        return 1000 / this.fps;
+    }
+    GameTime.getElapsedMS = getElapsedMS;
+    function getTotalSeconds() {
+        return GameTime.frame / 60;
+    }
+    GameTime.getTotalSeconds = getTotalSeconds;
+    function getTotalMinutes() {
+        return this.getTotalSeconds() / 60;
+    }
+    GameTime.getTotalMinutes = getTotalMinutes;
+    function getTotalHours() {
+        return this.getTotalMinutes() / 60;
+    }
+    GameTime.getTotalHours = getTotalHours;
+    function totalTimeStringFormat() {
+        var minutes = String(Math.floor(this.getTotalMinutes()));
+        if (minutes.length < 2) {
+            minutes = "0" + minutes;
+        }
+        var secondsPrefix = "";
+        var seconds = this.getTotalSeconds();
+        if (seconds < 10) {
+            secondsPrefix = "0";
+        }
+        return String(Math.floor(this.getTotalHours())) + ":" + minutes + ":" + secondsPrefix + String(seconds);
+    }
+    GameTime.totalTimeStringFormat = totalTimeStringFormat;
+})(GameTime || (GameTime = {}));
+var Scenes;
+(function (Scenes) {
+})(Scenes || (Scenes = {}));
 //# sourceMappingURL=game.js.map

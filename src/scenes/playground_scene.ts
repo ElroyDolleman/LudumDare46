@@ -10,12 +10,13 @@ class PlaygroundScene extends Phaser.Scene {
     }
 
     create() {
-        CurrentGameScene = this;
+        Scenes.Current = this;
 
         this.player = new Player();
     }
 
     update(time: number, delta: number) {
-        this.player.update(time, delta);
+        this.player.update();
+        this.player.onCollisionSolved();
     }
 }

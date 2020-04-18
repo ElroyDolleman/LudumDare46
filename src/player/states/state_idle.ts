@@ -7,7 +7,7 @@ class IdleState extends GroundedState
     public enter() {
     }
  
-    public update(time: number, delta: number) {
+    public update() {
     }
 
     public onCollisionSolved() {

@@ -1,1 +1,4 @@
-let CurrentGameScene: Phaser.Scene;
+module Scenes
+{
+    export let Current: Phaser.Scene;
+}

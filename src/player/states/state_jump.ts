@@ -7,7 +7,7 @@ class JumpState extends AirborneState
     public enter() {
     }
  
-    public update(time: number, delta: number) {
+    public update() {
     }
 
     public onCollisionSolved() {

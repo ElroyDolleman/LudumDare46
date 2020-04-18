@@ -9,7 +9,7 @@ class BaseState
     public enter() {
     }
 
-    public update(time: number, delta: number) {
+    public update() {
     }
 
     public onCollisionSolved() {
