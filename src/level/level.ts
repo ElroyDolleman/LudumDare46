@@ -11,6 +11,10 @@ class Level
     }
 
     public update() {
+        
+    }
+
+    public updateCollision() {
         this.collidableActors.forEach(actor => {
             let result = this.collisionManager.moveActor(actor);
 

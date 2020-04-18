@@ -24,10 +24,10 @@ class FlyState extends AirborneState
         }
 
         if (this.player.speed.y < 0) {
-            this.player.animator.sprite.anims.setTimeScale(1);
+            this.player.animator.setTimeScale(1);
         }
         else {
-            this.player.animator.sprite.anims.setTimeScale(0.5);
+            this.player.animator.setTimeScale(0.5);
         }
     }
 

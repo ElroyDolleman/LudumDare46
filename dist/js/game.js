@@ -29,12 +29,15 @@ var PlaygroundScene = /** @class */ (function (_super) {
         this.inputManager = new InputManager(this);
         this.level = this.levelLoader.load('playground01');
         this.player = new Player();
+        this.baby = new Baby();
         this.level.collidableActors.push(this.player);
+        this.level.collidableActors.push(this.baby);
     };
     PlaygroundScene.prototype.update = function (time, delta) {
         this.inputManager.update();
         this.player.update();
-        this.level.update();
+        this.baby.update();
+        this.level.updateCollision();
     };
     return PlaygroundScene;
 }(Phaser.Scene));
@@ -96,6 +99,8 @@ var Level = /** @class */ (function () {
         this.map = map;
     }
     Level.prototype.update = function () {
+    };
+    Level.prototype.updateCollision = function () {
         var _this = this;
         this.collidableActors.forEach(function (actor) {
             var result = _this.collisionManager.moveActor(actor);
@@ -251,7 +256,7 @@ var Tilemap = /** @class */ (function () {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
-        var _this = _super.call(this, new Phaser.Geom.Rectangle(107, 107, 10, 10)) || this;
+        var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 262, 10, 10)) || this;
         _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
         _this.animator = new PlayerAnimator(_this);
         _this.createStates();
@@ -285,70 +290,57 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(Actor));
-var PlayerAnimations;
-(function (PlayerAnimations) {
-    PlayerAnimations.Idle = { key: 'playerbird_walk_00.png', isSingleFrame: true };
-    PlayerAnimations.Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
-    PlayerAnimations.Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
-    PlayerAnimations.Run = { key: 'run', isSingleFrame: false };
-    PlayerAnimations.Fly = { key: 'fly', isSingleFrame: false };
-})(PlayerAnimations || (PlayerAnimations = {}));
-var PlayerAnimator = /** @class */ (function () {
-    function PlayerAnimator(player) {
+var Animator = /** @class */ (function () {
+    function Animator(sprite, actor) {
         this.currentSquish = { timer: 0, startTime: 0, reverseTime: 0, scaleX: 1, scaleY: 1 };
-        this.player = player;
-        this.sprite = Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key);
-        this.sprite.setOrigin(0.5, 1);
-        this.updatePosition();
-        this.createAnimation('run', 'playerbird_walk_', 2);
-        this.createAnimation('fly', 'playerbird_fly_', 2);
+        this.sprite = sprite;
+        this.actor = actor;
     }
-    Object.defineProperty(PlayerAnimator.prototype, "facingDirection", {
+    Object.defineProperty(Animator.prototype, "facingDirection", {
         get: function () { return this.sprite.flipX ? -1 : 1; },
         set: function (dir) { this.sprite.flipX = dir < 0; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(PlayerAnimator.prototype, "frameRate", {
-        get: function () { return this.sprite.anims.frameRate; },
-        set: function (value) { this.sprite.anims.frameRate = value; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(PlayerAnimator.prototype, "isSquishing", {
+    Object.defineProperty(Animator.prototype, "isSquishing", {
         get: function () { return this.currentSquish.timer > 0; },
         enumerable: true,
         configurable: true
     });
-    PlayerAnimator.prototype.update = function () {
-        if (this.player.speed.x > 0) {
+    Animator.prototype.update = function () {
+        if (this.actor.speed.x > 0) {
             this.sprite.flipX = false;
         }
-        else if (this.player.speed.x < 0) {
+        else if (this.actor.speed.x < 0) {
             this.sprite.flipX = true;
         }
         if (this.isSquishing) {
             this.updateSquish();
         }
     };
-    PlayerAnimator.prototype.updatePosition = function () {
-        this.sprite.setPosition(this.player.hitbox.centerX, this.player.hitbox.bottom);
+    Animator.prototype.updatePosition = function () {
+        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
     };
-    PlayerAnimator.prototype.changeAnimation = function (animation) {
-        if (animation.isSingleFrame) {
+    Animator.prototype.changeAnimation = function (key, isSingleFrame) {
+        if (isSingleFrame === void 0) { isSingleFrame = false; }
+        if (isSingleFrame) {
             this.sprite.anims.stop();
-            this.sprite.setFrame(animation.key);
+            this.sprite.setFrame(key);
         }
         else {
-            this.sprite.play(animation.key);
+            this.sprite.play(key);
+            this.setTimeScale(1);
         }
     };
-    PlayerAnimator.prototype.createAnimation = function (key, prefix, length, frameRate) {
+    Animator.prototype.setTimeScale = function (timeScale) {
+        this.sprite.anims.setTimeScale(timeScale);
+    };
+    Animator.prototype.createAnimation = function (key, texture, prefix, length, frameRate) {
         if (frameRate === void 0) { frameRate = 16; }
-        var frameNames = Scenes.Current.anims.generateFrameNames('player', {
+        var frameNames = Scenes.Current.anims.generateFrameNames(texture, {
             prefix: prefix,
             suffix: '.png',
-            end: length,
+            end: length - 1,
             zeroPad: 2
         });
         Scenes.Current.anims.create({
@@ -358,7 +350,7 @@ var PlayerAnimator = /** @class */ (function () {
             repeat: -1,
         });
     };
-    PlayerAnimator.prototype.squish = function (scaleX, scaleY, duration, reverseTime) {
+    Animator.prototype.squish = function (scaleX, scaleY, duration, reverseTime) {
         this.currentSquish = {
             timer: duration,
             reverseTime: reverseTime == undefined ? duration / 2 : reverseTime,
@@ -367,7 +359,7 @@ var PlayerAnimator = /** @class */ (function () {
             scaleY: scaleY
         };
     };
-    PlayerAnimator.prototype.updateSquish = function () {
+    Animator.prototype.updateSquish = function () {
         this.currentSquish.timer = Math.max(this.currentSquish.timer - GameTime.getElapsedMS(), 0);
         var timeToReverse = this.currentSquish.startTime - this.currentSquish.reverseTime;
         if (this.currentSquish.timer > timeToReverse) {
@@ -381,8 +373,36 @@ var PlayerAnimator = /** @class */ (function () {
             this.sprite.scaleY = Phaser.Math.Linear(this.currentSquish.scaleY, 1, t);
         }
     };
-    return PlayerAnimator;
+    return Animator;
 }());
+/// <reference path="../util/animator.ts"/>
+var PlayerAnimations;
+/// <reference path="../util/animator.ts"/>
+(function (PlayerAnimations) {
+    PlayerAnimations.Idle = { key: 'playerbird_walk_00.png', isSingleFrame: true };
+    PlayerAnimations.Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
+    PlayerAnimations.Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
+    PlayerAnimations.Run = { key: 'run', isSingleFrame: false };
+    PlayerAnimations.Fly = { key: 'fly', isSingleFrame: false };
+})(PlayerAnimations || (PlayerAnimations = {}));
+var PlayerAnimator = /** @class */ (function (_super) {
+    __extends(PlayerAnimator, _super);
+    function PlayerAnimator(player) {
+        var _this = _super.call(this, Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key), player) || this;
+        _this.sprite.setOrigin(0.5, 1);
+        _this.updatePosition();
+        _this.createAnimation('run', 'player', 'playerbird_walk_', 3);
+        _this.createAnimation('fly', 'player', 'playerbird_fly_', 3);
+        return _this;
+    }
+    PlayerAnimator.prototype.update = function () {
+        _super.prototype.update.call(this);
+    };
+    PlayerAnimator.prototype.changeAnimation = function (animation) {
+        _super.prototype.changeAnimation.call(this, animation.key, animation.isSingleFrame);
+    };
+    return PlayerAnimator;
+}(Animator));
 var PlayerStats;
 (function (PlayerStats) {
     PlayerStats.DefaultJumpPower = 218;
@@ -394,6 +414,51 @@ var PlayerStats;
     PlayerStats.FlyingGravity = PlayerStats.DefaultGravity * 0.5;
     PlayerStats.FlyingMaxFallSpeed = PlayerStats.DefaultMaxFallSpeed * 0.5;
 })(PlayerStats || (PlayerStats = {}));
+var Baby = /** @class */ (function (_super) {
+    __extends(Baby, _super);
+    function Baby() {
+        var _this = _super.call(this, new Phaser.Geom.Rectangle(242, 152, 5, 5)) || this;
+        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        _this.animator = new BabyAnimator(_this);
+        _this.speed.x = -48;
+        _this.speed.y = 48;
+        return _this;
+    }
+    Baby.prototype.update = function () {
+        this.animator.update();
+        this.drawHitbox();
+    };
+    Baby.prototype.onCollisionSolved = function (result) {
+        this.animator.updatePosition();
+    };
+    Baby.prototype.drawHitbox = function () {
+        this.hitboxGraphics.clear();
+        this.hitboxGraphics.depth = 10;
+        this.hitboxGraphics.fillRectShape(this.hitbox);
+    };
+    return Baby;
+}(Actor));
+/// <reference path="../../util/animator.ts"/>
+var BabyAnimator = /** @class */ (function (_super) {
+    __extends(BabyAnimator, _super);
+    function BabyAnimator(baby) {
+        var _this = _super.call(this, Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key), baby) || this;
+        _this.sprite.setOrigin(0.5, 1);
+        _this.sprite.flipX = true;
+        _this.updatePosition();
+        _this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);
+        _this.changeAnimation('walk');
+        return _this;
+    }
+    BabyAnimator.prototype.update = function () {
+        _super.prototype.update.call(this);
+    };
+    BabyAnimator.prototype.updatePosition = function () {
+        var extra = this.sprite.flipX ? 0 : 1;
+        this.sprite.setPosition(this.actor.hitbox.centerX - extra, this.actor.hitbox.bottom);
+    };
+    return BabyAnimator;
+}(Animator));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
         this.player = player;
@@ -514,10 +579,10 @@ var FlyState = /** @class */ (function (_super) {
             this.updateGravity(PlayerStats.FlyingGravity, PlayerStats.FlyingMaxFallSpeed);
         }
         if (this.player.speed.y < 0) {
-            this.player.animator.sprite.anims.setTimeScale(1);
+            this.player.animator.setTimeScale(1);
         }
         else {
-            this.player.animator.sprite.anims.setTimeScale(0.5);
+            this.player.animator.setTimeScale(0.5);
         }
     };
     FlyState.prototype.onCollisionSolved = function (result) {

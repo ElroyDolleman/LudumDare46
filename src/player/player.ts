@@ -1,4 +1,3 @@
-
 /// <reference path="../entities/actor.ts"/>
 class Player extends Actor
 {
@@ -13,7 +12,7 @@ class Player extends Actor
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
     constructor() {
-        super(new Phaser.Geom.Rectangle(107, 107, 10, 10));
+        super(new Phaser.Geom.Rectangle(16, 262, 10, 10));
         this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
 
         this.animator = new PlayerAnimator(this);
