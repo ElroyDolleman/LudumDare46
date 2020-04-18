@@ -5,9 +5,11 @@ class FallState extends AirborneState
     }
 
     public enter() {
+        this.player.animator.changeAnimation(PlayerAnimations.Fall);
     }
  
     public update() {
+        this.updateMovementControls();
         this.updateGravity();
     }
 

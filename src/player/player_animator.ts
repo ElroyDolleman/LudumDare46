@@ -1,3 +1,11 @@
+module PlayerAnimations
+{
+    export let Idle = { key: 'playerbird_walk_00.png', isSingleFrame: true };
+    export let Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
+    export let Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
+    export let Run = { key: 'run', isSingleFrame: false };
+}
+
 class PlayerAnimator
 {
     private player: Player;
@@ -38,13 +46,13 @@ class PlayerAnimator
         this.sprite.setPosition(this.player.hitbox.centerX, this.player.hitbox.bottom);
     }
 
-    public changeAnimation(key: string) {
-        if (key == 'idle') {
+    public changeAnimation(animation: any) {
+        if (animation.isSingleFrame) {
             this.sprite.anims.stop();
-            this.sprite.setFrame('playerbird_walk_00.png');
+            this.sprite.setFrame(animation.key);
         }
         else {
-            this.sprite.play(key);
+            this.sprite.play(animation.key);
         }
         
     }

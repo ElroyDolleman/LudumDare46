@@ -4,6 +4,6 @@ module PlayerStats
     export const DefaultRunAcceleration = 20;
     export const DefaultRunSpeed = 110;
 
-    export const DefaultGravity = 18;
-    export const DefaultMaxFallSpeed = 280;
+    export const DefaultGravity = 16;
+    export const DefaultMaxFallSpeed = 240;
 }

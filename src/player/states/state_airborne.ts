@@ -17,6 +17,9 @@ class AirborneState extends BaseState
         else if (result.onTop) {
             this.headbonk();
         }
+        if (result.onLeft || result.onRight) {
+            this.player.speed.x = 0;
+        }
     }
 
     public updateGravity(gravity: number = PlayerStats.DefaultGravity, maxFallSpeed: number = PlayerStats.DefaultMaxFallSpeed) {

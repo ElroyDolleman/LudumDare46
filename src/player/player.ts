@@ -42,7 +42,7 @@ class Player extends Actor
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
 
-        this.drawHitbox();
+        //this.drawHitbox();
     }
 
     public drawHitbox() {

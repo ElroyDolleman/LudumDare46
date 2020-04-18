@@ -18,6 +18,7 @@ class Tile {
     
     public get isSolid():boolean { return this.type == TileTypes.Solid; }
     public get isSemisolid():boolean { return this.type == TileTypes.Semisolid; }
+    public get canStandOn():boolean { return this.isSolid || this.isSemisolid; }
 
     constructor(sprite:Phaser.GameObjects.Sprite, x:number, y:number, width:number, height:number, col:number, row:number, type:TileTypes) {
         this.sprite = sprite;

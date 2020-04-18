@@ -19,11 +19,12 @@ class CollisionManager
         
         let result: CollisionResult = new CollisionResult();
         let tiles = this.currentLevel.map.getTilesFromRect(actor.calculateNextHitbox(), 2);
+        let prevBottomPos = actor.hitbox.bottom;// Used for semisold
         
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
             for (let i = 0; i < tiles.length; i++) {
-                if (!this.overlapsWithSolidTile(actor, tiles[i])) {
+                if (!tiles[i].isSolid || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
                     continue;
                 }
 
@@ -41,7 +42,14 @@ class CollisionManager
         if (actor.speed.y != 0) {
             actor.moveVertical();
             for (let i = 0; i < tiles.length; i++) {
-                if (!this.overlapsWithSolidTile(actor, tiles[i])) {
+                if (!tiles[i].canStandOn || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                    continue;
+                }
+                if (tiles[i].isSemisolid) {
+                    if (this.isFallingThroughSemisolid(tiles[i], prevBottomPos, actor.hitbox.bottom)) {
+                        result.onBottom = true;
+                        actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
+                    }
                     continue;
                 }
 
@@ -61,7 +69,7 @@ class CollisionManager
         return result;
     }
 
-    private overlapsWithSolidTile(actor: Actor, tile: Tile) {
-        return tile.isSolid && Phaser.Geom.Rectangle.Overlaps(tile.hitbox, actor.hitbox);
+    private isFallingThroughSemisolid(semisolidTile: Tile, prevBottom: number, currentBottom: number) {
+        return prevBottom <= semisolidTile.hitbox.top && currentBottom >= semisolidTile.hitbox.top;
     }
 }

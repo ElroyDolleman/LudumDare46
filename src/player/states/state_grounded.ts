@@ -17,33 +17,26 @@ class GroundedState extends BaseState
 
     public onCollisionSolved(result: CollisionResult) {
         
+        if (!this.hasGroundUnderneath(result.tiles)) {
+            this.player.changeState(this.player.fallState);
+        }
     }
 
-    public updateRunControls(maxRunSpeed: number = PlayerStats.DefaultRunSpeed, runAcceleration: number = PlayerStats.DefaultRunAcceleration)
-    {
-        if (Inputs.Left.isDown) {
-            if (this.player.speed.x > -maxRunSpeed) {
-                this.player.speed.x = Math.max(this.player.speed.x - runAcceleration, -maxRunSpeed);
+    protected hasGroundUnderneath(tiles: Tile[]):boolean {
+        for (let i = 0; i < tiles.length; i++) {
+            if (!tiles[i].canStandOn) {
+                continue;
             }
-            else if (this.player.speed.x < -maxRunSpeed) {
-                this.player.speed.x = Math.min(this.player.speed.x + runAcceleration, -maxRunSpeed);
-            }
-        }
-        else if (Inputs.Right.isDown) {
-            if (this.player.speed.x < maxRunSpeed) {
-                this.player.speed.x = Math.min(this.player.speed.x + runAcceleration, maxRunSpeed);
-            }
-            else if (this.player.speed.x > maxRunSpeed) {
-                this.player.speed.x = Math.max(this.player.speed.x - runAcceleration, maxRunSpeed);
+            if (this.isStandingOnTile(tiles[i])) {
+                return true;
             }
         }
-        else {
-            if (Math.abs(this.player.speed.x) < runAcceleration) {
-                this.player.speed.x = 0;
-            }
-            else {
-                this.player.speed.x -= runAcceleration * MathHelper.sign(this.player.speed.x);
-            }
+        return false;
+    }
+
+    protected isStandingOnTile(tile: Tile):boolean {
+        if (tile.hitbox.top == this.player.hitbox.bottom) {
+            return this.player.hitbox.right > tile.hitbox.left && this.player.hitbox.left < tile.hitbox.right;
         }
     }
 }

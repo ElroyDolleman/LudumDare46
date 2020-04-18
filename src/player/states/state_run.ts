@@ -5,11 +5,11 @@ class RunState extends GroundedState
     }
 
     public enter() {
-        this.player.animator.changeAnimation('run');
+        this.player.animator.changeAnimation(PlayerAnimations.Run);
     }
  
     public update() {
-        this.updateRunControls();
+        this.updateMovementControls();
 
         if (this.player.speed.x == 0) {
             this.player.changeState(this.player.idleState);
@@ -19,6 +19,6 @@ class RunState extends GroundedState
     }
 
     public onCollisionSolved(result: CollisionResult) {
-        
+        super.onCollisionSolved(result);
     }
 }

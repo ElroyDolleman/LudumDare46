@@ -10,9 +10,12 @@ class JumpState extends AirborneState
 
     public enter() {
         this.isHoldingJump = true;
+        this.player.animator.changeAnimation(PlayerAnimations.Jump);
     }
  
     public update() {
+        this.updateMovementControls();
+
         if (this.isHoldingJump && (!Inputs.Jump.key.isDown || this.heldDownFrames > this.heldDownFramesMax)) {
             this.isHoldingJump = false;
         }
@@ -21,9 +24,9 @@ class JumpState extends AirborneState
             this.player.speed.y -= PlayerStats.DefaultGravity - 8;
         }
 
-        if (this.player.speed.y >= -18) {
-            this.player.speed.y -= 8;
-        }
+        // if (this.player.speed.y >= -18) {
+        //     this.player.speed.y -= 8;
+        // }
 
         this.updateGravity();
 

@@ -4,11 +4,95 @@
 			"image": "player.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 32,
-				"h": 32
+				"w": 41,
+				"h": 41
 			},
 			"scale": 1,
 			"frames": [
+				{
+					"filename": "playerbird_fly_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 1,
+						"w": 16,
+						"h": 15
+					},
+					"frame": {
+						"x": 0,
+						"y": 0,
+						"w": 16,
+						"h": 15
+					}
+				},
+				{
+					"filename": "playerbird_jump_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 1,
+						"w": 16,
+						"h": 15
+					},
+					"frame": {
+						"x": 16,
+						"y": 0,
+						"w": 16,
+						"h": 15
+					}
+				},
+				{
+					"filename": "playerbird_fall_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 2,
+						"w": 16,
+						"h": 14
+					},
+					"frame": {
+						"x": 0,
+						"y": 15,
+						"w": 16,
+						"h": 14
+					}
+				},
+				{
+					"filename": "playerbird_walk_01.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 4,
+						"w": 16,
+						"h": 12
+					},
+					"frame": {
+						"x": 0,
+						"y": 29,
+						"w": 16,
+						"h": 12
+					}
+				},
 				{
 					"filename": "playerbird_walk_00.png",
 					"rotated": false,
@@ -24,8 +108,8 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 0,
-						"y": 0,
+						"x": 16,
+						"y": 15,
 						"w": 16,
 						"h": 13
 					}
@@ -46,30 +130,9 @@
 					},
 					"frame": {
 						"x": 16,
-						"y": 0,
+						"y": 28,
 						"w": 16,
 						"h": 13
-					}
-				},
-				{
-					"filename": "playerbird_walk_01.png",
-					"rotated": false,
-					"trimmed": true,
-					"sourceSize": {
-						"w": 16,
-						"h": 16
-					},
-					"spriteSourceSize": {
-						"x": 0,
-						"y": 4,
-						"w": 16,
-						"h": 12
-					},
-					"frame": {
-						"x": 0,
-						"y": 13,
-						"w": 16,
-						"h": 12
 					}
 				}
 			]
@@ -78,6 +141,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:dc7bcd38e0f11504173e2c0908bf1d45:40d35daeeca20ec42eced4c9150d2b09:86d5339b780aedd87b35e2b7c0a7e11b$"
+		"smartupdate": "$TexturePacker:SmartUpdate:b742bea3c9bea9414402de74f3d4b382:8b00a40d6ba8f29bdce626ad1771f676:86d5339b780aedd87b35e2b7c0a7e11b$"
 	}
 }

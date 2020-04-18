@@ -99,10 +99,10 @@ var Level = /** @class */ (function () {
         var _this = this;
         this.collidableActors.forEach(function (actor) {
             var result = _this.collisionManager.moveActor(actor);
-            _this.map.clearHitboxDrawings();
-            for (var i = 0; i < result.tiles.length; i++) {
-                result.tiles[i].drawHitbox();
-            }
+            // this.map.clearHitboxDrawings();
+            // for (let i = 0; i < result.tiles.length; i++) {
+            //     result.tiles[i].drawHitbox()
+            // }
         });
     };
     return Level;
@@ -176,6 +176,11 @@ var Tile = /** @class */ (function () {
     });
     Object.defineProperty(Tile.prototype, "isSemisolid", {
         get: function () { return this.type == TileTypes.Semisolid; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Tile.prototype, "canStandOn", {
+        get: function () { return this.isSolid || this.isSemisolid; },
         enumerable: true,
         configurable: true
     });
@@ -270,7 +275,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.onCollisionSolved = function (result) {
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
-        this.drawHitbox();
+        //this.drawHitbox();
     };
     Player.prototype.drawHitbox = function () {
         this.hitboxGraphics.clear();
@@ -279,6 +284,13 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(Actor));
+var PlayerAnimations;
+(function (PlayerAnimations) {
+    PlayerAnimations.Idle = { key: 'playerbird_walk_00.png', isSingleFrame: true };
+    PlayerAnimations.Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
+    PlayerAnimations.Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
+    PlayerAnimations.Run = { key: 'run', isSingleFrame: false };
+})(PlayerAnimations || (PlayerAnimations = {}));
 var PlayerAnimator = /** @class */ (function () {
     function PlayerAnimator(player) {
         this.currentSquish = { timer: 0, startTime: 0, reverseTime: 0, scaleX: 1, scaleY: 1 };
@@ -317,13 +329,13 @@ var PlayerAnimator = /** @class */ (function () {
     PlayerAnimator.prototype.updatePosition = function () {
         this.sprite.setPosition(this.player.hitbox.centerX, this.player.hitbox.bottom);
     };
-    PlayerAnimator.prototype.changeAnimation = function (key) {
-        if (key == 'idle') {
+    PlayerAnimator.prototype.changeAnimation = function (animation) {
+        if (animation.isSingleFrame) {
             this.sprite.anims.stop();
-            this.sprite.setFrame('playerbird_walk_00.png');
+            this.sprite.setFrame(animation.key);
         }
         else {
-            this.sprite.play(key);
+            this.sprite.play(animation.key);
         }
     };
     PlayerAnimator.prototype.createAnimation = function (key, prefix, length, frameRate) {
@@ -371,8 +383,8 @@ var PlayerStats;
     PlayerStats.DefaultJumpPower = 218;
     PlayerStats.DefaultRunAcceleration = 20;
     PlayerStats.DefaultRunSpeed = 110;
-    PlayerStats.DefaultGravity = 18;
-    PlayerStats.DefaultMaxFallSpeed = 280;
+    PlayerStats.DefaultGravity = 16;
+    PlayerStats.DefaultMaxFallSpeed = 240;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
@@ -384,72 +396,7 @@ var BaseState = /** @class */ (function () {
     };
     BaseState.prototype.onCollisionSolved = function (result) {
     };
-    return BaseState;
-}());
-var AirborneState = /** @class */ (function (_super) {
-    __extends(AirborneState, _super);
-    function AirborneState(player) {
-        return _super.call(this, player) || this;
-    }
-    AirborneState.prototype.enter = function () {
-    };
-    AirborneState.prototype.update = function () {
-    };
-    AirborneState.prototype.onCollisionSolved = function (result) {
-        if (result.onBottom) {
-            this.land();
-        }
-        else if (result.onTop) {
-            this.headbonk();
-        }
-    };
-    AirborneState.prototype.updateGravity = function (gravity, maxFallSpeed) {
-        if (gravity === void 0) { gravity = PlayerStats.DefaultGravity; }
-        if (maxFallSpeed === void 0) { maxFallSpeed = PlayerStats.DefaultMaxFallSpeed; }
-        if (this.player.speed.y < maxFallSpeed) {
-            this.player.speed.y = Math.min(this.player.speed.y + gravity, maxFallSpeed);
-        }
-    };
-    AirborneState.prototype.land = function () {
-        this.player.speed.y = 0;
-        this.player.changeState(this.player.speed.x == 0 ? this.player.idleState : this.player.runState);
-    };
-    AirborneState.prototype.headbonk = function () {
-        this.player.speed.y = 0;
-    };
-    return AirborneState;
-}(BaseState));
-var FallState = /** @class */ (function (_super) {
-    __extends(FallState, _super);
-    function FallState(player) {
-        return _super.call(this, player) || this;
-    }
-    FallState.prototype.enter = function () {
-    };
-    FallState.prototype.update = function () {
-        this.updateGravity();
-    };
-    FallState.prototype.onCollisionSolved = function (result) {
-        _super.prototype.onCollisionSolved.call(this, result);
-    };
-    return FallState;
-}(AirborneState));
-var GroundedState = /** @class */ (function (_super) {
-    __extends(GroundedState, _super);
-    function GroundedState(player) {
-        return _super.call(this, player) || this;
-    }
-    GroundedState.prototype.enter = function () {
-    };
-    GroundedState.prototype.update = function () {
-        if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames < 3) {
-            this.player.speed.y = -PlayerStats.DefaultJumpPower;
-            this.player.changeState(this.player.jumpState);
-        }
-    };
-    GroundedState.prototype.onCollisionSolved = function (result) {
-    };
-    GroundedState.prototype.updateRunControls = function (maxRunSpeed, runAcceleration) {
+    BaseState.prototype.updateMovementControls = function (maxRunSpeed, runAcceleration) {
         if (maxRunSpeed === void 0) { maxRunSpeed = PlayerStats.DefaultRunSpeed; }
         if (runAcceleration === void 0) { runAcceleration = PlayerStats.DefaultRunAcceleration; }
         if (Inputs.Left.isDown) {
@@ -477,6 +424,95 @@ var GroundedState = /** @class */ (function (_super) {
             }
         }
     };
+    return BaseState;
+}());
+var AirborneState = /** @class */ (function (_super) {
+    __extends(AirborneState, _super);
+    function AirborneState(player) {
+        return _super.call(this, player) || this;
+    }
+    AirborneState.prototype.enter = function () {
+    };
+    AirborneState.prototype.update = function () {
+    };
+    AirborneState.prototype.onCollisionSolved = function (result) {
+        if (result.onBottom) {
+            this.land();
+        }
+        else if (result.onTop) {
+            this.headbonk();
+        }
+        if (result.onLeft || result.onRight) {
+            this.player.speed.x = 0;
+        }
+    };
+    AirborneState.prototype.updateGravity = function (gravity, maxFallSpeed) {
+        if (gravity === void 0) { gravity = PlayerStats.DefaultGravity; }
+        if (maxFallSpeed === void 0) { maxFallSpeed = PlayerStats.DefaultMaxFallSpeed; }
+        if (this.player.speed.y < maxFallSpeed) {
+            this.player.speed.y = Math.min(this.player.speed.y + gravity, maxFallSpeed);
+        }
+    };
+    AirborneState.prototype.land = function () {
+        this.player.speed.y = 0;
+        this.player.changeState(this.player.speed.x == 0 ? this.player.idleState : this.player.runState);
+    };
+    AirborneState.prototype.headbonk = function () {
+        this.player.speed.y = 0;
+    };
+    return AirborneState;
+}(BaseState));
+var FallState = /** @class */ (function (_super) {
+    __extends(FallState, _super);
+    function FallState(player) {
+        return _super.call(this, player) || this;
+    }
+    FallState.prototype.enter = function () {
+        this.player.animator.changeAnimation(PlayerAnimations.Fall);
+    };
+    FallState.prototype.update = function () {
+        this.updateMovementControls();
+        this.updateGravity();
+    };
+    FallState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
+    };
+    return FallState;
+}(AirborneState));
+var GroundedState = /** @class */ (function (_super) {
+    __extends(GroundedState, _super);
+    function GroundedState(player) {
+        return _super.call(this, player) || this;
+    }
+    GroundedState.prototype.enter = function () {
+    };
+    GroundedState.prototype.update = function () {
+        if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames < 3) {
+            this.player.speed.y = -PlayerStats.DefaultJumpPower;
+            this.player.changeState(this.player.jumpState);
+        }
+    };
+    GroundedState.prototype.onCollisionSolved = function (result) {
+        if (!this.hasGroundUnderneath(result.tiles)) {
+            this.player.changeState(this.player.fallState);
+        }
+    };
+    GroundedState.prototype.hasGroundUnderneath = function (tiles) {
+        for (var i = 0; i < tiles.length; i++) {
+            if (!tiles[i].canStandOn) {
+                continue;
+            }
+            if (this.isStandingOnTile(tiles[i])) {
+                return true;
+            }
+        }
+        return false;
+    };
+    GroundedState.prototype.isStandingOnTile = function (tile) {
+        if (tile.hitbox.top == this.player.hitbox.bottom) {
+            return this.player.hitbox.right > tile.hitbox.left && this.player.hitbox.left < tile.hitbox.right;
+        }
+    };
     return GroundedState;
 }(BaseState));
 var IdleState = /** @class */ (function (_super) {
@@ -485,16 +521,17 @@ var IdleState = /** @class */ (function (_super) {
         return _super.call(this, player) || this;
     }
     IdleState.prototype.enter = function () {
-        this.player.animator.changeAnimation('idle');
+        this.player.animator.changeAnimation(PlayerAnimations.Idle);
     };
     IdleState.prototype.update = function () {
-        this.updateRunControls();
+        this.updateMovementControls();
         if (this.player.speed.x != 0) {
             this.player.changeState(this.player.runState);
         }
         _super.prototype.update.call(this);
     };
     IdleState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
     };
     return IdleState;
 }(GroundedState));
@@ -507,8 +544,10 @@ var JumpState = /** @class */ (function (_super) {
     }
     JumpState.prototype.enter = function () {
         this.isHoldingJump = true;
+        this.player.animator.changeAnimation(PlayerAnimations.Jump);
     };
     JumpState.prototype.update = function () {
+        this.updateMovementControls();
         if (this.isHoldingJump && (!Inputs.Jump.key.isDown || this.heldDownFrames > this.heldDownFramesMax)) {
             this.isHoldingJump = false;
         }
@@ -516,9 +555,9 @@ var JumpState = /** @class */ (function (_super) {
             this.heldDownFrames++;
             this.player.speed.y -= PlayerStats.DefaultGravity - 8;
         }
-        if (this.player.speed.y >= -18) {
-            this.player.speed.y -= 8;
-        }
+        // if (this.player.speed.y >= -18) {
+        //     this.player.speed.y -= 8;
+        // }
         this.updateGravity();
         if (this.player.speed.y >= 0) {
             this.player.changeState(this.player.fallState);
@@ -535,16 +574,17 @@ var RunState = /** @class */ (function (_super) {
         return _super.call(this, player) || this;
     }
     RunState.prototype.enter = function () {
-        this.player.animator.changeAnimation('run');
+        this.player.animator.changeAnimation(PlayerAnimations.Run);
     };
     RunState.prototype.update = function () {
-        this.updateRunControls();
+        this.updateMovementControls();
         if (this.player.speed.x == 0) {
             this.player.changeState(this.player.idleState);
         }
         _super.prototype.update.call(this);
     };
     RunState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
     };
     return RunState;
 }(GroundedState));
@@ -565,10 +605,11 @@ var CollisionManager = /** @class */ (function () {
     CollisionManager.prototype.moveActor = function (actor) {
         var result = new CollisionResult();
         var tiles = this.currentLevel.map.getTilesFromRect(actor.calculateNextHitbox(), 2);
+        var prevBottomPos = actor.hitbox.bottom; // Used for semisold
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
             for (var i = 0; i < tiles.length; i++) {
-                if (!this.overlapsWithSolidTile(actor, tiles[i])) {
+                if (!tiles[i].isSolid || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
                     continue;
                 }
                 if (actor.speed.x > 0) {
@@ -584,7 +625,14 @@ var CollisionManager = /** @class */ (function () {
         if (actor.speed.y != 0) {
             actor.moveVertical();
             for (var i = 0; i < tiles.length; i++) {
-                if (!this.overlapsWithSolidTile(actor, tiles[i])) {
+                if (!tiles[i].canStandOn || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                    continue;
+                }
+                if (tiles[i].isSemisolid) {
+                    if (this.isFallingThroughSemisolid(tiles[i], prevBottomPos, actor.hitbox.bottom)) {
+                        result.onBottom = true;
+                        actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
+                    }
                     continue;
                 }
                 if (actor.speed.y > 0) {
@@ -601,8 +649,8 @@ var CollisionManager = /** @class */ (function () {
         actor.onCollisionSolved(result);
         return result;
     };
-    CollisionManager.prototype.overlapsWithSolidTile = function (actor, tile) {
-        return tile.isSolid && Phaser.Geom.Rectangle.Overlaps(tile.hitbox, actor.hitbox);
+    CollisionManager.prototype.isFallingThroughSemisolid = function (semisolidTile, prevBottom, currentBottom) {
+        return prevBottom <= semisolidTile.hitbox.top && currentBottom >= semisolidTile.hitbox.top;
     };
     return CollisionManager;
 }());

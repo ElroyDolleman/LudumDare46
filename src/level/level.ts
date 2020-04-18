@@ -14,10 +14,10 @@ class Level
         this.collidableActors.forEach(actor => {
             let result = this.collisionManager.moveActor(actor);
 
-            this.map.clearHitboxDrawings();
-            for (let i = 0; i < result.tiles.length; i++) {
-                result.tiles[i].drawHitbox()
-            }
+            // this.map.clearHitboxDrawings();
+            // for (let i = 0; i < result.tiles.length; i++) {
+            //     result.tiles[i].drawHitbox()
+            // }
         });
     }
 }
