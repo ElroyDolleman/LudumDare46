@@ -1,0 +1,1 @@
+let CurrentGameScene: Phaser.Scene;
