@@ -17,12 +17,16 @@ var PlaygroundScene = /** @class */ (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     PlaygroundScene.prototype.init = function () {
+        this.levelLoader = new LevelLoader(this);
     };
     PlaygroundScene.prototype.preload = function () {
         this.load.atlas('player', 'assets/player.png', 'assets/player.json');
+        this.load.spritesheet('tileset', 'assets/tileset.png', { frameWidth: TILE_WIDTH, frameHeight: TILE_HEIGHT });
+        this.levelLoader.preloadJsonFiles();
     };
     PlaygroundScene.prototype.create = function () {
         Scenes.Current = this;
+        this.level = this.levelLoader.load('playground01');
         this.player = new Player();
     };
     PlaygroundScene.prototype.update = function (time, delta) {
@@ -81,6 +85,117 @@ var Actor = /** @class */ (function () {
         return new Phaser.Geom.Rectangle(this.x + this.speed.x * GameTime.getElapsed(), this.y + this.speed.y * GameTime.getElapsed(), this.hitbox.width, this.hitbox.height);
     };
     return Actor;
+}());
+var Level = /** @class */ (function () {
+    function Level(map) {
+        this.map = map;
+    }
+    return Level;
+}());
+var LevelLoader = /** @class */ (function () {
+    function LevelLoader(scene) {
+        this.scene = scene;
+    }
+    LevelLoader.prototype.preloadJsonFiles = function () {
+        this.scene.load.json('levels', 'assets/levels.json');
+    };
+    LevelLoader.prototype.load = function (name) {
+        var levelJson = this.scene.cache.json.get('levels')[name];
+        var map = this.createTilemap(levelJson);
+        return new Level(map);
+    };
+    LevelLoader.prototype.createTilemap = function (levelJson) {
+        var tilesetName = levelJson['tileset'];
+        var columns = levelJson['columns'];
+        var rows = levelJson['rows'];
+        var tilesData = levelJson['tiles'];
+        var tiles = [];
+        for (var i = 0; i < tilesData.length; i++) {
+            var tileId = tilesData[i] - 1;
+            var col = i % columns;
+            var row = Math.floor(i / columns);
+            var x = col * TILE_WIDTH;
+            var y = row * TILE_HEIGHT;
+            var sprite = null;
+            var tiletype = TileTypes.Empty;
+            if (tileId >= 0) {
+                sprite = this.scene.add.sprite(x, y, tilesetName, tileId);
+                sprite.setOrigin(0, 0);
+                if (levelJson['solidTiles'].indexOf(tileId) >= 0) {
+                    tiletype = TileTypes.Solid;
+                }
+                else if (levelJson['semisolidTiles'].indexOf(tileId) >= 0) {
+                    tiletype = TileTypes.Semisolid;
+                }
+            }
+            tiles.push(new Tile(sprite, x, y, TILE_WIDTH, TILE_HEIGHT, row, col, tiletype));
+        }
+        return new Tilemap(tiles, columns, rows);
+    };
+    return LevelLoader;
+}());
+var TileTypes;
+(function (TileTypes) {
+    TileTypes[TileTypes["Empty"] = 0] = "Empty";
+    TileTypes[TileTypes["Solid"] = 1] = "Solid";
+    TileTypes[TileTypes["Semisolid"] = 2] = "Semisolid";
+})(TileTypes || (TileTypes = {}));
+var Tile = /** @class */ (function () {
+    function Tile(sprite, x, y, width, height, col, row, type) {
+        this.sprite = sprite;
+        this.hitbox = new Phaser.Geom.Rectangle(x, y, width, height);
+        this.column = col;
+        this.row = row;
+        this.type = type ? type : TileTypes.Empty;
+    }
+    Object.defineProperty(Tile.prototype, "position", {
+        get: function () { return new Phaser.Geom.Point(this.hitbox.x, this.hitbox.y); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Tile.prototype, "isSolid", {
+        get: function () { return this.type == TileTypes.Solid; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Tile.prototype, "isSemisolid", {
+        get: function () { return this.type == TileTypes.Semisolid; },
+        enumerable: true,
+        configurable: true
+    });
+    return Tile;
+}());
+var Tilemap = /** @class */ (function () {
+    function Tilemap(tiles, columns, rows) {
+        this.tiles = tiles;
+        this.columns = columns;
+        this.rows = rows;
+    }
+    Tilemap.prototype.getTile = function (col, row) {
+        return this.tiles[col + (row * this.columns)];
+    };
+    Tilemap.prototype.worldToTile = function (x, y) {
+        return this.getTile(this.toColumn(x), this.toRow(y));
+    };
+    Tilemap.prototype.toColumn = function (xPos) {
+        return Math.floor(xPos / TILE_WIDTH);
+    };
+    Tilemap.prototype.toRow = function (yPos) {
+        return Math.floor(yPos / TILE_HEIGHT);
+    };
+    Tilemap.prototype.toGridLocation = function (x, y) {
+        return new Phaser.Geom.Point(this.toColumn(x), this.toRow(y));
+    };
+    Tilemap.prototype.toWorldX = function (column) {
+        return column * TILE_WIDTH;
+    };
+    Tilemap.prototype.toWorldY = function (row) {
+        return row * TILE_HEIGHT;
+    };
+    Tilemap.prototype.toWorldPosition = function (col, row) {
+        return new Phaser.Geom.Point(this.toWorldX(col), this.toWorldY(row));
+    };
+    return Tilemap;
 }());
 /// <reference path="../entities/actor.ts"/>
 var Player = /** @class */ (function (_super) {
@@ -239,6 +354,33 @@ var RunState = /** @class */ (function (_super) {
     };
     return RunState;
 }(GroundedState));
+var CollisionResult = /** @class */ (function () {
+    function CollisionResult() {
+        this.onTop = false;
+        this.onLeft = false;
+        this.onRight = false;
+        this.onBottom = false;
+    }
+    return CollisionResult;
+}());
+var CollisionManager = /** @class */ (function () {
+    function CollisionManager() {
+    }
+    CollisionManager.moveActor = function (actor) {
+        var result = new CollisionResult();
+        var previousHitbox = actor.hitbox;
+        if (actor.speed.x != 0) {
+            actor.moveHorizontal();
+            //TODO: Loop through tiles
+        }
+        if (actor.speed.x != 0) {
+            actor.moveVertical();
+            //TODO: Loop through tiles
+        }
+        return result;
+    };
+    return CollisionManager;
+}());
 var GameTime;
 (function (GameTime) {
     GameTime.fps = 60;
@@ -277,6 +419,8 @@ var GameTime;
     }
     GameTime.totalTimeStringFormat = totalTimeStringFormat;
 })(GameTime || (GameTime = {}));
+var TILE_WIDTH = 16;
+var TILE_HEIGHT = 16;
 var Scenes;
 (function (Scenes) {
 })(Scenes || (Scenes = {}));
