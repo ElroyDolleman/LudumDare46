@@ -10,6 +10,9 @@ class Baby extends Actor
     public walkState: BabyWalkState;
     public waitState: BabyWaitState;
     public airState: BabyAirborneState;
+    public deadState: BabyDeadState;
+
+    public get isDead(): boolean { return this.currentState == this.deadState; }
 
     constructor(mommy: Player) {
         super(new Phaser.Geom.Rectangle(16, 283, 5, 5));
@@ -26,6 +29,7 @@ class Baby extends Actor
         this.walkState = new BabyWalkState(this);
         this.waitState = new BabyWaitState(this);
         this.airState = new BabyAirborneState(this);
+        this.deadState = new BabyDeadState(this);
     }
 
     public update() {

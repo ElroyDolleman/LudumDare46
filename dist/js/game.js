@@ -105,10 +105,16 @@ var Baby = /** @class */ (function (_super) {
         _this.changeState(_this.walkState);
         return _this;
     }
+    Object.defineProperty(Baby.prototype, "isDead", {
+        get: function () { return this.currentState == this.deadState; },
+        enumerable: true,
+        configurable: true
+    });
     Baby.prototype.createStates = function () {
         this.walkState = new BabyWalkState(this);
         this.waitState = new BabyWaitState(this);
         this.airState = new BabyAirborneState(this);
+        this.deadState = new BabyDeadState(this);
     };
     Baby.prototype.update = function () {
         this.currentState.update();
@@ -200,6 +206,7 @@ var Animator = /** @class */ (function () {
             end: length - 1,
             zeroPad: 2
         });
+        console.log(frameNames);
         Scenes.Current.anims.create({
             key: key,
             frames: frameNames,
@@ -240,6 +247,7 @@ var BabyAnimator = /** @class */ (function (_super) {
         _this.sprite.setOrigin(0.5, 1);
         _this.updatePosition();
         _this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);
+        _this.createAnimation('dead', 'player', 'babybird_die_', 3, 20, 0);
         _this.changeAnimation('walk');
         return _this;
     }
@@ -259,7 +267,7 @@ var BabyStats;
     BabyStats.DefaultMaxFallSpeed = 320;
     BabyStats.DefaultWaitingTime = 1000;
     BabyStats.MommyBouncePower = 168;
-    BabyStats.DeadFallSpeed = BabyStats.DefaultMaxFallSpeed;
+    BabyStats.DeadFallSpeed = 300;
 })(BabyStats || (BabyStats = {}));
 var BabyBaseState = /** @class */ (function () {
     function BabyBaseState(baby) {
@@ -290,13 +298,10 @@ var BabyAirborneState = /** @class */ (function (_super) {
         }
         else if (result.onBottom) {
             if (this.baby.speed.y >= BabyStats.DeadFallSpeed) {
-                console.log("BABY DIED", this.baby.speed.y);
-                //TODO: Change to dead state
                 this.baby.speed.y = 0;
-                this.baby.changeState(this.baby.walkState);
+                this.baby.changeState(this.baby.deadState);
             }
             else {
-                console.log("survived", this.baby.speed.y);
                 this.baby.speed.y = 0;
                 this.baby.changeState(this.baby.walkState);
             }
@@ -344,6 +349,22 @@ var BabyGroundedState = /** @class */ (function (_super) {
     };
     return BabyGroundedState;
 }(BabyBaseState));
+/// <reference path="baby_state_grounded.ts"/>
+var BabyDeadState = /** @class */ (function (_super) {
+    __extends(BabyDeadState, _super);
+    function BabyDeadState(baby) {
+        return _super.call(this, baby) || this;
+    }
+    BabyDeadState.prototype.enter = function () {
+        this.baby.animator.changeAnimation('dead');
+        this.baby.speed.x = 0;
+    };
+    BabyDeadState.prototype.update = function () {
+    };
+    BabyDeadState.prototype.onCollisionSolved = function (result) {
+    };
+    return BabyDeadState;
+}(BabyGroundedState));
 var BabyWaitState = /** @class */ (function (_super) {
     __extends(BabyWaitState, _super);
     function BabyWaitState(baby) {
@@ -597,10 +618,14 @@ var Player = /** @class */ (function (_super) {
         this.flyState = new FlyState(this);
         this.yellState = new YellState(this);
         this.crouchState = new CrouchState(this);
+        this.panicState = new PanicState(this);
     };
     Player.prototype.update = function () {
         this.currentState.update();
         this.animator.update();
+        if (this.baby.isDead && this.currentState != this.panicState) {
+            this.changeState(this.panicState);
+        }
     };
     Player.prototype.changeState = function (newState) {
         this.currentState.leave();
@@ -641,6 +666,7 @@ var PlayerAnimations;
     PlayerAnimations.Run = { key: 'run', isSingleFrame: false };
     PlayerAnimations.Fly = { key: 'fly', isSingleFrame: false };
     PlayerAnimations.Yell = { key: 'yell', isSingleFrame: false };
+    PlayerAnimations.Panic = { key: 'panic', isSingleFrame: false };
 })(PlayerAnimations || (PlayerAnimations = {}));
 var PlayerAnimator = /** @class */ (function (_super) {
     __extends(PlayerAnimator, _super);
@@ -651,6 +677,7 @@ var PlayerAnimator = /** @class */ (function (_super) {
         _this.createAnimation('run', 'player', 'playerbird_walk_', 3);
         _this.createAnimation('fly', 'player', 'playerbird_fly_', 3);
         _this.createAnimation('yell', 'player', 'playerbird_yell_', 3, 12, 1);
+        _this.createAnimation('panic', 'player', 'playerbird_shocked_', 3, 20);
         return _this;
     }
     PlayerAnimator.prototype.update = function () {
@@ -675,6 +702,7 @@ var PlayerStats;
     PlayerStats.YellRadius = 18;
     PlayerStats.CrouchDeceleration = 12;
     PlayerStats.CrouchHitboxHeight = 6;
+    PlayerStats.PanicRunSpeed = 60;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
@@ -927,6 +955,47 @@ var JumpState = /** @class */ (function (_super) {
         _super.prototype.onCollisionSolved.call(this, result);
     };
     return JumpState;
+}(AirborneState));
+var PanicState = /** @class */ (function (_super) {
+    __extends(PanicState, _super);
+    function PanicState(player) {
+        return _super.call(this, player) || this;
+    }
+    PanicState.prototype.enter = function () {
+        this.player.animator.changeAnimation(PlayerAnimations.Panic);
+        this.player.speed.x = 0;
+        var direction = MathHelper.sign(this.player.baby.hitbox.centerX - this.player.hitbox.centerX);
+        this.player.animator.facingDirection = direction;
+        this.randomlyMoving = true;
+    };
+    PanicState.prototype.update = function () {
+        this.updateGravity();
+        if (this.randomlyMoving) {
+            this.updatePanicRunning();
+        }
+    };
+    PanicState.prototype.updatePanicRunning = function () {
+        var _this = this;
+        if (this.player.speed.x == 0) {
+            this.player.speed.x = PlayerStats.PanicRunSpeed * (Math.random() > 0.5 ? 1 : -1);
+            setTimeout(function () {
+                if (_this && _this.player)
+                    _this.player.speed.x = 0;
+            }, Phaser.Math.Between(100, 300));
+        }
+    };
+    PanicState.prototype.onCollisionSolved = function (result) {
+        if (result.onBottom) {
+            this.player.speed.y = 0;
+        }
+        if (result.onRight) {
+            this.player.speed.x = -PlayerStats.PanicRunSpeed;
+        }
+        else if (result.onLeft) {
+            this.player.speed.x = PlayerStats.PanicRunSpeed;
+        }
+    };
+    return PanicState;
 }(AirborneState));
 var RunState = /** @class */ (function (_super) {
     __extends(RunState, _super);

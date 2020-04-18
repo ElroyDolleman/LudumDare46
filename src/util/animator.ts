@@ -49,6 +49,7 @@ class Animator
             end: length - 1,
             zeroPad: 2
         });
+        console.log(frameNames);
         Scenes.Current.anims.create({
             key: key,
             frames: frameNames,

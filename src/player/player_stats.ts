@@ -17,4 +17,6 @@ module PlayerStats
 
     export const CrouchDeceleration = 12;
     export const CrouchHitboxHeight = 6;
+
+    export const PanicRunSpeed = 60;
 }

@@ -9,6 +9,7 @@ class Player extends Actor
     public flyState: FlyState;
     public yellState: YellState;
     public crouchState: CrouchState;
+    public panicState: PanicState;
 
     public baby: Baby;
     public animator: PlayerAnimator;
@@ -44,11 +45,16 @@ class Player extends Actor
         this.flyState = new FlyState(this);
         this.yellState = new YellState(this);
         this.crouchState = new CrouchState(this);
+        this.panicState = new PanicState(this);
     }
 
     public update() {
         this.currentState.update();
         this.animator.update();
+
+        if (this.baby.isDead && this.currentState != this.panicState) {
+            this.changeState(this.panicState);
+        }
     }
 
     public changeState(newState: BaseState) {

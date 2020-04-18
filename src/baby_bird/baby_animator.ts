@@ -7,6 +7,7 @@ class BabyAnimator extends Animator
         this.updatePosition();
 
         this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);
+        this.createAnimation('dead', 'player', 'babybird_die_', 3, 20, 0);
         this.changeAnimation('walk');
     }
 

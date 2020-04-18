@@ -4,11 +4,53 @@
 			"image": "player.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 49,
-				"h": 49
+				"w": 61,
+				"h": 61
 			},
 			"scale": 1,
 			"frames": [
+				{
+					"filename": "playerbird_shocked_00.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 16,
+						"h": 16
+					},
+					"frame": {
+						"x": 0,
+						"y": 0,
+						"w": 16,
+						"h": 16
+					}
+				},
+				{
+					"filename": "playerbird_shocked_01.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 16,
+						"h": 16
+					},
+					"frame": {
+						"x": 0,
+						"y": 16,
+						"w": 16,
+						"h": 16
+					}
+				},
 				{
 					"filename": "playerbird_fly_00.png",
 					"rotated": false,
@@ -25,9 +67,30 @@
 					},
 					"frame": {
 						"x": 0,
-						"y": 0,
+						"y": 32,
 						"w": 16,
 						"h": 15
+					}
+				},
+				{
+					"filename": "playerbird_fall_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 2,
+						"w": 16,
+						"h": 14
+					},
+					"frame": {
+						"x": 0,
+						"y": 47,
+						"w": 16,
+						"h": 14
 					}
 				},
 				{
@@ -52,7 +115,7 @@
 					}
 				},
 				{
-					"filename": "playerbird_fall_00.png",
+					"filename": "playerbird_shocked_02.png",
 					"rotated": false,
 					"trimmed": true,
 					"sourceSize": {
@@ -61,15 +124,15 @@
 					},
 					"spriteSourceSize": {
 						"x": 0,
-						"y": 2,
+						"y": 1,
 						"w": 16,
-						"h": 14
+						"h": 15
 					},
 					"frame": {
-						"x": 32,
-						"y": 0,
+						"x": 16,
+						"y": 15,
 						"w": 16,
-						"h": 14
+						"h": 15
 					}
 				},
 				{
@@ -87,8 +150,8 @@
 						"h": 14
 					},
 					"frame": {
-						"x": 32,
-						"y": 14,
+						"x": 16,
+						"y": 30,
 						"w": 16,
 						"h": 14
 					}
@@ -108,8 +171,8 @@
 						"h": 14
 					},
 					"frame": {
-						"x": 0,
-						"y": 28,
+						"x": 16,
+						"y": 44,
 						"w": 16,
 						"h": 14
 					}
@@ -129,8 +192,8 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 0,
-						"y": 15,
+						"x": 32,
+						"y": 0,
 						"w": 16,
 						"h": 13
 					}
@@ -150,8 +213,8 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 0,
-						"y": 15,
+						"x": 32,
+						"y": 0,
 						"w": 16,
 						"h": 13
 					}
@@ -171,31 +234,10 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 16,
-						"y": 15,
+						"x": 32,
+						"y": 13,
 						"w": 16,
 						"h": 13
-					}
-				},
-				{
-					"filename": "babybird_walk_00.png",
-					"rotated": false,
-					"trimmed": true,
-					"sourceSize": {
-						"w": 16,
-						"h": 16
-					},
-					"spriteSourceSize": {
-						"x": 3,
-						"y": 9,
-						"w": 11,
-						"h": 7
-					},
-					"frame": {
-						"x": 0,
-						"y": 42,
-						"w": 11,
-						"h": 7
 					}
 				},
 				{
@@ -213,8 +255,8 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 16,
-						"y": 28,
+						"x": 32,
+						"y": 26,
 						"w": 16,
 						"h": 13
 					}
@@ -234,31 +276,10 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 16,
-						"y": 28,
+						"x": 32,
+						"y": 26,
 						"w": 16,
 						"h": 13
-					}
-				},
-				{
-					"filename": "babybird_walk_01.png",
-					"rotated": false,
-					"trimmed": true,
-					"sourceSize": {
-						"w": 16,
-						"h": 16
-					},
-					"spriteSourceSize": {
-						"x": 3,
-						"y": 8,
-						"w": 11,
-						"h": 8
-					},
-					"frame": {
-						"x": 16,
-						"y": 41,
-						"w": 11,
-						"h": 8
 					}
 				},
 				{
@@ -277,7 +298,7 @@
 					},
 					"frame": {
 						"x": 32,
-						"y": 28,
+						"y": 39,
 						"w": 16,
 						"h": 12
 					}
@@ -298,9 +319,114 @@
 					},
 					"frame": {
 						"x": 32,
-						"y": 40,
+						"y": 51,
 						"w": 16,
 						"h": 9
+					}
+				},
+				{
+					"filename": "babybird_walk_01.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 3,
+						"y": 8,
+						"w": 11,
+						"h": 8
+					},
+					"frame": {
+						"x": 48,
+						"y": 0,
+						"w": 11,
+						"h": 8
+					}
+				},
+				{
+					"filename": "babybird_die_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 3,
+						"y": 9,
+						"w": 11,
+						"h": 7
+					},
+					"frame": {
+						"x": 48,
+						"y": 8,
+						"w": 11,
+						"h": 7
+					}
+				},
+				{
+					"filename": "babybird_walk_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 3,
+						"y": 9,
+						"w": 11,
+						"h": 7
+					},
+					"frame": {
+						"x": 48,
+						"y": 8,
+						"w": 11,
+						"h": 7
+					}
+				},
+				{
+					"filename": "babybird_die_01.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 4,
+						"y": 11,
+						"w": 9,
+						"h": 5
+					},
+					"frame": {
+						"x": 48,
+						"y": 15,
+						"w": 9,
+						"h": 5
+					}
+				},
+				{
+					"filename": "babybird_die_02.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 4,
+						"y": 12,
+						"w": 9,
+						"h": 4
+					},
+					"frame": {
+						"x": 48,
+						"y": 20,
+						"w": 9,
+						"h": 4
 					}
 				}
 			]
@@ -309,6 +435,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:89957b27d6b1b6db17750fc010f6ef85:0e7d7d1c5e3c38c1b90ea20da22a209e:86d5339b780aedd87b35e2b7c0a7e11b$"
+		"smartupdate": "$TexturePacker:SmartUpdate:d82c447f0ee3e8b3878b16eca516be38:49e26a2c98fc16626f9e8e944f706600:86d5339b780aedd87b35e2b7c0a7e11b$"
 	}
 }

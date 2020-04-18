@@ -18,14 +18,10 @@ class BabyAirborneState extends BabyBaseState
         }
         else if (result.onBottom) {
             if (this.baby.speed.y >= BabyStats.DeadFallSpeed) {
-                console.log("BABY DIED", this.baby.speed.y);
-
-                //TODO: Change to dead state
                 this.baby.speed.y = 0;
-                this.baby.changeState(this.baby.walkState);
+                this.baby.changeState(this.baby.deadState);
             }
             else {
-                console.log("survived", this.baby.speed.y);
                 this.baby.speed.y = 0;
                 this.baby.changeState(this.baby.walkState);
             }
