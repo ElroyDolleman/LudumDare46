@@ -4,7 +4,7 @@ class CollisionResult
     onLeft: boolean = false;
     onRight: boolean = false;
     onBottom: boolean = false;
-    tiles: Tile[];
+    tiles: Tile[] = [];
 }
 
 class CollisionManager
@@ -17,8 +17,8 @@ class CollisionManager
 
     public moveActor(actor: Actor):CollisionResult {
         
-        let tiles = this.currentLevel.map.getTilesFromRect(actor.hitbox);
         let result: CollisionResult = new CollisionResult();
+        let tiles = this.currentLevel.map.getTilesFromRect(actor.calculateNextHitbox(), 2);
         
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
@@ -56,6 +56,7 @@ class CollisionManager
             }
         }
         
+        result.tiles = tiles;
         actor.onCollisionSolved(result);
         return result;
     }

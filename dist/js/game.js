@@ -98,7 +98,11 @@ var Level = /** @class */ (function () {
     Level.prototype.update = function () {
         var _this = this;
         this.collidableActors.forEach(function (actor) {
-            _this.collisionManager.moveActor(actor);
+            var result = _this.collisionManager.moveActor(actor);
+            _this.map.clearHitboxDrawings();
+            for (var i = 0; i < result.tiles.length; i++) {
+                result.tiles[i].drawHitbox();
+            }
         });
     };
     return Level;
@@ -158,6 +162,7 @@ var Tile = /** @class */ (function () {
         this.column = col;
         this.row = row;
         this.type = type ? type : TileTypes.Empty;
+        this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFFFF00, alpha: 0.5 } });
     }
     Object.defineProperty(Tile.prototype, "position", {
         get: function () { return new Phaser.Geom.Point(this.hitbox.x, this.hitbox.y); },
@@ -174,6 +179,14 @@ var Tile = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    Tile.prototype.drawHitbox = function () {
+        this.debugGraphics.clear();
+        this.debugGraphics.depth = 10;
+        this.debugGraphics.fillRectShape(this.hitbox);
+    };
+    Tile.prototype.clearHitbox = function () {
+        this.debugGraphics.clear();
+    };
     return Tile;
 }());
 var Tilemap = /** @class */ (function () {
@@ -187,13 +200,16 @@ var Tilemap = /** @class */ (function () {
     };
     Tilemap.prototype.getTilesFromRect = function (rect, margin) {
         if (margin === void 0) { margin = 0; }
-        return this.getTilesFromTo(this.toGridLocation(rect.x + margin, rect.y + margin), this.toGridLocation(rect.right + margin, rect.bottom + margin));
+        return this.getTilesFromTo(this.toGridLocation(rect.x - margin, rect.y - margin), this.toGridLocation(rect.right + margin, rect.bottom + margin));
     };
     Tilemap.prototype.getTilesFromTo = function (from, to) {
         var tiles = [];
         for (var x = from.x; x <= to.x; x++) {
             for (var y = from.y; y <= to.y; y++) {
-                tiles.push(this.getTile(x, y));
+                var tile = this.getTile(x, y);
+                if (tile) {
+                    tiles.push(tile);
+                }
             }
         }
         return tiles;
@@ -219,6 +235,11 @@ var Tilemap = /** @class */ (function () {
     Tilemap.prototype.toWorldPosition = function (col, row) {
         return new Phaser.Geom.Point(this.toWorldX(col), this.toWorldY(row));
     };
+    Tilemap.prototype.clearHitboxDrawings = function () {
+        this.tiles.forEach(function (tile) {
+            tile.clearHitbox();
+        });
+    };
     return Tilemap;
 }());
 /// <reference path="../entities/actor.ts"/>
@@ -227,9 +248,9 @@ var Player = /** @class */ (function (_super) {
     function Player() {
         var _this = _super.call(this, new Phaser.Geom.Rectangle(107, 107, 14, 10)) || this;
         _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        _this.animator = new PlayerAnimator(_this);
         _this.createStates();
         _this.changeState(_this.idleState);
-        _this.animator = new PlayerAnimator(_this);
         return _this;
     }
     Player.prototype.createStates = function () {
@@ -247,6 +268,7 @@ var Player = /** @class */ (function (_super) {
         this.currentState.enter();
     };
     Player.prototype.onCollisionSolved = function (result) {
+        this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
         this.drawHitbox();
     };
@@ -259,6 +281,7 @@ var Player = /** @class */ (function (_super) {
 }(Actor));
 var PlayerAnimator = /** @class */ (function () {
     function PlayerAnimator(player) {
+        this.currentSquish = { timer: 0, startTime: 0, reverseTime: 0, scaleX: 1, scaleY: 1 };
         this.player = player;
         this.sprite = Scenes.Current.add.sprite(0, 0, 'player', 'playerbird_walk_00.png');
         this.sprite.setOrigin(0.5, 1);
@@ -266,10 +289,42 @@ var PlayerAnimator = /** @class */ (function () {
         this.createAnimation('run', 'playerbird_walk_', 2);
         this.sprite.play('run');
     }
+    Object.defineProperty(PlayerAnimator.prototype, "facingDirection", {
+        get: function () { return this.sprite.flipX ? -1 : 1; },
+        set: function (dir) {
+            this.sprite.flipX = dir < 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PlayerAnimator.prototype, "isSquishing", {
+        get: function () { return this.currentSquish.timer > 0; },
+        enumerable: true,
+        configurable: true
+    });
+    ;
     PlayerAnimator.prototype.update = function () {
+        if (this.player.speed.x > 0) {
+            this.sprite.flipX = false;
+        }
+        else if (this.player.speed.x < 0) {
+            this.sprite.flipX = true;
+        }
+        if (this.isSquishing) {
+            this.updateSquish();
+        }
     };
     PlayerAnimator.prototype.updatePosition = function () {
         this.sprite.setPosition(this.player.hitbox.centerX, this.player.hitbox.bottom);
+    };
+    PlayerAnimator.prototype.changeAnimation = function (key) {
+        if (key == 'idle') {
+            this.sprite.anims.stop();
+            this.sprite.setFrame('playerbird_walk_00.png');
+        }
+        else {
+            this.sprite.play(key);
+        }
     };
     PlayerAnimator.prototype.createAnimation = function (key, prefix, length, frameRate) {
         if (frameRate === void 0) { frameRate = 16; }
@@ -286,11 +341,38 @@ var PlayerAnimator = /** @class */ (function () {
             repeat: -1,
         });
     };
+    PlayerAnimator.prototype.squish = function (scaleX, scaleY, duration, reverseTime) {
+        this.currentSquish = {
+            timer: duration,
+            reverseTime: reverseTime == undefined ? duration / 2 : reverseTime,
+            startTime: duration,
+            scaleX: scaleX,
+            scaleY: scaleY
+        };
+    };
+    PlayerAnimator.prototype.updateSquish = function () {
+        this.currentSquish.timer = Math.max(this.currentSquish.timer - GameTime.getElapsedMS(), 0);
+        var timeToReverse = this.currentSquish.startTime - this.currentSquish.reverseTime;
+        if (this.currentSquish.timer > timeToReverse) {
+            var t = 1 - (this.currentSquish.timer - timeToReverse) / this.currentSquish.reverseTime;
+            this.sprite.scaleX = Phaser.Math.Linear(1, this.currentSquish.scaleX, t);
+            this.sprite.scaleY = Phaser.Math.Linear(1, this.currentSquish.scaleY, t);
+        }
+        else {
+            var t = 1 - this.currentSquish.timer / timeToReverse;
+            this.sprite.scaleX = Phaser.Math.Linear(this.currentSquish.scaleX, 1, t);
+            this.sprite.scaleY = Phaser.Math.Linear(this.currentSquish.scaleY, 1, t);
+        }
+    };
     return PlayerAnimator;
 }());
 var PlayerStats;
 (function (PlayerStats) {
-    PlayerStats.DefaultRunSpeed = 48;
+    PlayerStats.DefaultJumpPower = 218;
+    PlayerStats.DefaultRunAcceleration = 20;
+    PlayerStats.DefaultRunSpeed = 110;
+    PlayerStats.DefaultGravity = 18;
+    PlayerStats.DefaultMaxFallSpeed = 280;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
@@ -314,6 +396,26 @@ var AirborneState = /** @class */ (function (_super) {
     AirborneState.prototype.update = function () {
     };
     AirborneState.prototype.onCollisionSolved = function (result) {
+        if (result.onBottom) {
+            this.land();
+        }
+        else if (result.onTop) {
+            this.headbonk();
+        }
+    };
+    AirborneState.prototype.updateGravity = function (gravity, maxFallSpeed) {
+        if (gravity === void 0) { gravity = PlayerStats.DefaultGravity; }
+        if (maxFallSpeed === void 0) { maxFallSpeed = PlayerStats.DefaultMaxFallSpeed; }
+        if (this.player.speed.y < maxFallSpeed) {
+            this.player.speed.y = Math.min(this.player.speed.y + gravity, maxFallSpeed);
+        }
+    };
+    AirborneState.prototype.land = function () {
+        this.player.speed.y = 0;
+        this.player.changeState(this.player.speed.x == 0 ? this.player.idleState : this.player.runState);
+    };
+    AirborneState.prototype.headbonk = function () {
+        this.player.speed.y = 0;
     };
     return AirborneState;
 }(BaseState));
@@ -325,8 +427,10 @@ var FallState = /** @class */ (function (_super) {
     FallState.prototype.enter = function () {
     };
     FallState.prototype.update = function () {
+        this.updateGravity();
     };
     FallState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
     };
     return FallState;
 }(AirborneState));
@@ -338,8 +442,40 @@ var GroundedState = /** @class */ (function (_super) {
     GroundedState.prototype.enter = function () {
     };
     GroundedState.prototype.update = function () {
+        if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames < 3) {
+            this.player.speed.y = -PlayerStats.DefaultJumpPower;
+            this.player.changeState(this.player.jumpState);
+        }
     };
     GroundedState.prototype.onCollisionSolved = function (result) {
+    };
+    GroundedState.prototype.updateRunControls = function (maxRunSpeed, runAcceleration) {
+        if (maxRunSpeed === void 0) { maxRunSpeed = PlayerStats.DefaultRunSpeed; }
+        if (runAcceleration === void 0) { runAcceleration = PlayerStats.DefaultRunAcceleration; }
+        if (Inputs.Left.isDown) {
+            if (this.player.speed.x > -maxRunSpeed) {
+                this.player.speed.x = Math.max(this.player.speed.x - runAcceleration, -maxRunSpeed);
+            }
+            else if (this.player.speed.x < -maxRunSpeed) {
+                this.player.speed.x = Math.min(this.player.speed.x + runAcceleration, -maxRunSpeed);
+            }
+        }
+        else if (Inputs.Right.isDown) {
+            if (this.player.speed.x < maxRunSpeed) {
+                this.player.speed.x = Math.min(this.player.speed.x + runAcceleration, maxRunSpeed);
+            }
+            else if (this.player.speed.x > maxRunSpeed) {
+                this.player.speed.x = Math.max(this.player.speed.x - runAcceleration, maxRunSpeed);
+            }
+        }
+        else {
+            if (Math.abs(this.player.speed.x) < runAcceleration) {
+                this.player.speed.x = 0;
+            }
+            else {
+                this.player.speed.x -= runAcceleration * MathHelper.sign(this.player.speed.x);
+            }
+        }
     };
     return GroundedState;
 }(BaseState));
@@ -349,16 +485,14 @@ var IdleState = /** @class */ (function (_super) {
         return _super.call(this, player) || this;
     }
     IdleState.prototype.enter = function () {
+        this.player.animator.changeAnimation('idle');
     };
     IdleState.prototype.update = function () {
-        if (Inputs.Left.isDown) {
-            this.player.speed.x = -PlayerStats.DefaultRunSpeed;
+        this.updateRunControls();
+        if (this.player.speed.x != 0) {
             this.player.changeState(this.player.runState);
         }
-        if (Inputs.Right.isDown) {
-            this.player.speed.x = PlayerStats.DefaultRunSpeed;
-            this.player.changeState(this.player.runState);
-        }
+        _super.prototype.update.call(this);
     };
     IdleState.prototype.onCollisionSolved = function (result) {
     };
@@ -367,13 +501,31 @@ var IdleState = /** @class */ (function (_super) {
 var JumpState = /** @class */ (function (_super) {
     __extends(JumpState, _super);
     function JumpState(player) {
-        return _super.call(this, player) || this;
+        var _this = _super.call(this, player) || this;
+        _this.heldDownFramesMax = 30;
+        return _this;
     }
     JumpState.prototype.enter = function () {
+        this.isHoldingJump = true;
     };
     JumpState.prototype.update = function () {
+        if (this.isHoldingJump && (!Inputs.Jump.key.isDown || this.heldDownFrames > this.heldDownFramesMax)) {
+            this.isHoldingJump = false;
+        }
+        else if (this.isHoldingJump) {
+            this.heldDownFrames++;
+            this.player.speed.y -= PlayerStats.DefaultGravity - 8;
+        }
+        if (this.player.speed.y >= -18) {
+            this.player.speed.y -= 8;
+        }
+        this.updateGravity();
+        if (this.player.speed.y >= 0) {
+            this.player.changeState(this.player.fallState);
+        }
     };
     JumpState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
     };
     return JumpState;
 }(AirborneState));
@@ -383,8 +535,14 @@ var RunState = /** @class */ (function (_super) {
         return _super.call(this, player) || this;
     }
     RunState.prototype.enter = function () {
+        this.player.animator.changeAnimation('run');
     };
     RunState.prototype.update = function () {
+        this.updateRunControls();
+        if (this.player.speed.x == 0) {
+            this.player.changeState(this.player.idleState);
+        }
+        _super.prototype.update.call(this);
     };
     RunState.prototype.onCollisionSolved = function (result) {
     };
@@ -396,6 +554,7 @@ var CollisionResult = /** @class */ (function () {
         this.onLeft = false;
         this.onRight = false;
         this.onBottom = false;
+        this.tiles = [];
     }
     return CollisionResult;
 }());
@@ -404,8 +563,8 @@ var CollisionManager = /** @class */ (function () {
         this.currentLevel = level;
     }
     CollisionManager.prototype.moveActor = function (actor) {
-        var tiles = this.currentLevel.map.getTilesFromRect(actor.hitbox);
         var result = new CollisionResult();
+        var tiles = this.currentLevel.map.getTilesFromRect(actor.calculateNextHitbox(), 2);
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
             for (var i = 0; i < tiles.length; i++) {
@@ -438,6 +597,7 @@ var CollisionManager = /** @class */ (function () {
                 }
             }
         }
+        result.tiles = tiles;
         actor.onCollisionSolved(result);
         return result;
     };
@@ -508,4 +668,14 @@ var InputManager = /** @class */ (function () {
     };
     return InputManager;
 }());
+var MathHelper;
+(function (MathHelper) {
+    /**
+     * Returns an integer that indicates the sign of a number.
+     */
+    function sign(value) {
+        return value == 0 ? 0 : value > 0 ? 1 : -1;
+    }
+    MathHelper.sign = sign;
+})(MathHelper || (MathHelper = {}));
 //# sourceMappingURL=game.js.map

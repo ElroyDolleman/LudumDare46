@@ -16,7 +16,7 @@ class Tilemap {
     }
     public getTilesFromRect(rect: Phaser.Geom.Rectangle, margin: number = 0):Tile[] {
         return this.getTilesFromTo(
-            this.toGridLocation(rect.x + margin, rect.y + margin), 
+            this.toGridLocation(rect.x - margin, rect.y - margin), 
             this.toGridLocation(rect.right + margin, rect.bottom + margin)
         );
     }
@@ -24,7 +24,10 @@ class Tilemap {
         let tiles = [];
         for (let x = from.x; x <= to.x; x++) {
             for (let y = from.y; y <= to.y; y++) {
-                tiles.push(this.getTile(x, y));
+                let tile = this.getTile(x, y);
+                if (tile) {
+                    tiles.push(tile);
+                }
             }
         }
         return tiles;
@@ -56,5 +59,11 @@ class Tilemap {
             this.toWorldX(col),
             this.toWorldY(row)
         );
+    }
+
+    public clearHitboxDrawings() {
+        this.tiles.forEach(tile => {
+            tile.clearHitbox();
+        });
     }
 }

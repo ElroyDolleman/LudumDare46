@@ -8,9 +8,10 @@ class FallState extends AirborneState
     }
  
     public update() {
+        this.updateGravity();
     }
 
     public onCollisionSolved(result: CollisionResult) {
-        
+        super.onCollisionSolved(result);
     }
 }

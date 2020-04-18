@@ -5,19 +5,17 @@ class IdleState extends GroundedState
     }
 
     public enter() {
-        
+        this.player.animator.changeAnimation('idle');
     }
  
     public update() {
+        this.updateRunControls();
 
-        if (Inputs.Left.isDown) {
-            this.player.speed.x = -PlayerStats.DefaultRunSpeed;
+        if (this.player.speed.x != 0) {
             this.player.changeState(this.player.runState);
         }
-        if (Inputs.Right.isDown) {
-            this.player.speed.x = PlayerStats.DefaultRunSpeed;
-            this.player.changeState(this.player.runState);
-        }
+
+        super.update();
     }
 
     public onCollisionSolved(result: CollisionResult) {
