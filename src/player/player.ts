@@ -8,6 +8,7 @@ class Player extends Actor
     public jumpState: JumpState;
     public flyState: FlyState;
     public yellState: YellState;
+    public crouchState: CrouchState;
 
     public baby: Baby;
     public animator: PlayerAnimator;
@@ -20,7 +21,9 @@ class Player extends Actor
             this.hitbox.centerY, 
             PlayerStats.YellRadius
         ); 
-    }
+    };
+
+    public get isCrouching(): boolean { return this.currentState == this.crouchState; };
 
     constructor() {
         super(new Phaser.Geom.Rectangle(16, 262, 10, 10));
@@ -29,7 +32,8 @@ class Player extends Actor
         this.animator = new PlayerAnimator(this);
 
         this.createStates();
-        this.changeState(this.idleState);
+        this.currentState = this.idleState;
+        this.currentState.enter();
     }
 
     private createStates() {
@@ -39,6 +43,7 @@ class Player extends Actor
         this.jumpState = new JumpState(this);
         this.flyState = new FlyState(this);
         this.yellState = new YellState(this);
+        this.crouchState = new CrouchState(this);
     }
 
     public update() {
@@ -47,6 +52,7 @@ class Player extends Actor
     }
 
     public changeState(newState: BaseState) {
+        this.currentState.leave();
         this.currentState = newState;
         this.currentState.enter();
     }
@@ -60,10 +66,19 @@ class Player extends Actor
 
         //this.drawHitbox();
     }
+    
+    public decelerate(deceleration: number) {
+        if (Math.abs(this.speed.x) < deceleration) {
+            this.speed.x = 0;
+        }
+        else {
+            this.speed.x -= deceleration * MathHelper.sign(this.speed.x);
+        }
+    }
 
     public drawHitbox() {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillCircleShape(this.yellArea);
+        this.hitboxGraphics.fillRectShape(this.hitbox);
     }
 }

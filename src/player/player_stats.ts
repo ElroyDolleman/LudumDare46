@@ -1,5 +1,7 @@
 module PlayerStats
 {
+    export const DefaultHitboxHeight = 10;
+
     export const DefaultJumpPower = 218;
     export const DefaultRunAcceleration = 20;
     export const DefaultRunSpeed = 110;
@@ -12,4 +14,7 @@ module PlayerStats
     export const FlyingMaxFallSpeed = DefaultMaxFallSpeed * 0.5;
 
     export const YellRadius = 18;
+
+    export const CrouchDeceleration = 12;
+    export const CrouchHitboxHeight = 6;
 }

@@ -11,7 +11,10 @@ class BabyWalkState extends BabyGroundedState
     }
 
     public update() {
-        
+        if (this.baby.mommy.isCrouching && Phaser.Geom.Rectangle.Overlaps(this.baby.hitbox, this.baby.mommy.hitbox)) {
+            this.baby.speed.y -= 128;
+            this.baby.changeState(this.baby.airState);
+        }
     }
 
     public onCollisionSolved(result: CollisionResult) {

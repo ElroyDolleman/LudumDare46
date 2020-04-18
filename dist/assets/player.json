@@ -4,8 +4,8 @@
 			"image": "player.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 48,
-				"h": 48
+				"w": 49,
+				"h": 49
 			},
 			"scale": 1,
 			"frames": [
@@ -178,6 +178,27 @@
 					}
 				},
 				{
+					"filename": "babybird_walk_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 3,
+						"y": 9,
+						"w": 11,
+						"h": 7
+					},
+					"frame": {
+						"x": 0,
+						"y": 42,
+						"w": 11,
+						"h": 7
+					}
+				},
+				{
 					"filename": "playerbird_yell_01.png",
 					"rotated": false,
 					"trimmed": true,
@@ -220,6 +241,27 @@
 					}
 				},
 				{
+					"filename": "babybird_walk_01.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 3,
+						"y": 8,
+						"w": 11,
+						"h": 8
+					},
+					"frame": {
+						"x": 16,
+						"y": 41,
+						"w": 11,
+						"h": 8
+					}
+				},
+				{
 					"filename": "playerbird_walk_01.png",
 					"rotated": false,
 					"trimmed": true,
@@ -241,7 +283,7 @@
 					}
 				},
 				{
-					"filename": "babybird_walk_01.png",
+					"filename": "playerbird_crouch_00.png",
 					"rotated": false,
 					"trimmed": true,
 					"sourceSize": {
@@ -249,37 +291,16 @@
 						"h": 16
 					},
 					"spriteSourceSize": {
-						"x": 3,
-						"y": 8,
-						"w": 11,
-						"h": 8
+						"x": 0,
+						"y": 7,
+						"w": 16,
+						"h": 9
 					},
 					"frame": {
 						"x": 32,
 						"y": 40,
-						"w": 11,
-						"h": 8
-					}
-				},
-				{
-					"filename": "babybird_walk_00.png",
-					"rotated": false,
-					"trimmed": true,
-					"sourceSize": {
 						"w": 16,
-						"h": 16
-					},
-					"spriteSourceSize": {
-						"x": 3,
-						"y": 9,
-						"w": 11,
-						"h": 7
-					},
-					"frame": {
-						"x": 16,
-						"y": 41,
-						"w": 11,
-						"h": 7
+						"h": 9
 					}
 				}
 			]
@@ -288,6 +309,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:82a48542f4351fa5e803709cd4443414:7607a32c02bdfcb9d81f13cec0ead10a:86d5339b780aedd87b35e2b7c0a7e11b$"
+		"smartupdate": "$TexturePacker:SmartUpdate:89957b27d6b1b6db17750fc010f6ef85:0e7d7d1c5e3c38c1b90ea20da22a209e:86d5339b780aedd87b35e2b7c0a7e11b$"
 	}
 }

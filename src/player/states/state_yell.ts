@@ -18,6 +18,6 @@ class YellState extends GroundedState
     }
 
     public onCollisionSolved(result: CollisionResult) {
-        
+        super.onCollisionSolved(result);
     }
 }

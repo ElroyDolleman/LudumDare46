@@ -15,6 +15,10 @@ class BaseState
     public onCollisionSolved(result: CollisionResult) {
 
     }
+    
+    public leave() {
+
+    }
 
     protected updateMovementControls(maxRunSpeed: number = PlayerStats.DefaultRunSpeed, runAcceleration: number = PlayerStats.DefaultRunAcceleration) {
         if (Inputs.Left.isDown) {
@@ -34,12 +38,7 @@ class BaseState
             }
         }
         else {
-            if (Math.abs(this.player.speed.x) < runAcceleration) {
-                this.player.speed.x = 0;
-            }
-            else {
-                this.player.speed.x -= runAcceleration * MathHelper.sign(this.player.speed.x);
-            }
+            this.player.decelerate(runAcceleration);
         }
     }
 }

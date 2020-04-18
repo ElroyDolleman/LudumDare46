@@ -5,6 +5,7 @@ module Inputs
     export let Down: Phaser.Input.Keyboard.Key;
     export let Right: Phaser.Input.Keyboard.Key;
     export let Yell: Phaser.Input.Keyboard.Key;
+    export let Crouch: Phaser.Input.Keyboard.Key;
     
     export let Jump: { key: Phaser.Input.Keyboard.Key, heldDownFrames: number };    
 }
@@ -17,6 +18,7 @@ class InputManager
         Inputs.Down = scene.input.keyboard.addKey('down');
         Inputs.Right = scene.input.keyboard.addKey('right');
 
+        Inputs.Crouch = scene.input.keyboard.addKey('down');
         Inputs.Yell = scene.input.keyboard.addKey('x');
         Inputs.Jump = { key: scene.input.keyboard.addKey('z'), heldDownFrames: 0 };
     }

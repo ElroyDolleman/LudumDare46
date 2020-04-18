@@ -97,7 +97,7 @@ var Actor = /** @class */ (function () {
 var Baby = /** @class */ (function (_super) {
     __extends(Baby, _super);
     function Baby(mommy) {
-        var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 152, 5, 5)) || this;
+        var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 283, 5, 5)) || this;
         _this.mommy = mommy;
         _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
         _this.animator = new BabyAnimator(_this);
@@ -257,7 +257,7 @@ var BabyStats;
     BabyStats.DefaultWalkSpeed = 32;
     BabyStats.DefaultGravity = 12;
     BabyStats.DefaultMaxFallSpeed = 320;
-    BabyStats.DefaultWaitingTime = 2000;
+    BabyStats.DefaultWaitingTime = 1000;
     BabyStats.MommyBouncePower = 168;
     BabyStats.DeadFallSpeed = BabyStats.DefaultMaxFallSpeed;
 })(BabyStats || (BabyStats = {}));
@@ -379,6 +379,10 @@ var BabyWalkState = /** @class */ (function (_super) {
         this.baby.speed.x = BabyStats.DefaultWalkSpeed * this.baby.animator.facingDirection;
     };
     BabyWalkState.prototype.update = function () {
+        if (this.baby.mommy.isCrouching && Phaser.Geom.Rectangle.Overlaps(this.baby.hitbox, this.baby.mommy.hitbox)) {
+            this.baby.speed.y -= 128;
+            this.baby.changeState(this.baby.airState);
+        }
     };
     BabyWalkState.prototype.onCollisionSolved = function (result) {
         if (result.onRight) {
@@ -561,7 +565,8 @@ var Player = /** @class */ (function (_super) {
         _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
         _this.animator = new PlayerAnimator(_this);
         _this.createStates();
-        _this.changeState(_this.idleState);
+        _this.currentState = _this.idleState;
+        _this.currentState.enter();
         return _this;
     }
     Object.defineProperty(Player.prototype, "bounceHitbox", {
@@ -577,6 +582,13 @@ var Player = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    ;
+    Object.defineProperty(Player.prototype, "isCrouching", {
+        get: function () { return this.currentState == this.crouchState; },
+        enumerable: true,
+        configurable: true
+    });
+    ;
     Player.prototype.createStates = function () {
         this.idleState = new IdleState(this);
         this.runState = new RunState(this);
@@ -584,12 +596,14 @@ var Player = /** @class */ (function (_super) {
         this.jumpState = new JumpState(this);
         this.flyState = new FlyState(this);
         this.yellState = new YellState(this);
+        this.crouchState = new CrouchState(this);
     };
     Player.prototype.update = function () {
         this.currentState.update();
         this.animator.update();
     };
     Player.prototype.changeState = function (newState) {
+        this.currentState.leave();
         this.currentState = newState;
         this.currentState.enter();
     };
@@ -601,10 +615,18 @@ var Player = /** @class */ (function (_super) {
         this.animator.updatePosition();
         //this.drawHitbox();
     };
+    Player.prototype.decelerate = function (deceleration) {
+        if (Math.abs(this.speed.x) < deceleration) {
+            this.speed.x = 0;
+        }
+        else {
+            this.speed.x -= deceleration * MathHelper.sign(this.speed.x);
+        }
+    };
     Player.prototype.drawHitbox = function () {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillCircleShape(this.yellArea);
+        this.hitboxGraphics.fillRectShape(this.hitbox);
     };
     return Player;
 }(Actor));
@@ -615,6 +637,7 @@ var PlayerAnimations;
     PlayerAnimations.Idle = { key: 'playerbird_walk_00.png', isSingleFrame: true };
     PlayerAnimations.Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
     PlayerAnimations.Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
+    PlayerAnimations.Crouch = { key: 'playerbird_crouch_00.png', isSingleFrame: true };
     PlayerAnimations.Run = { key: 'run', isSingleFrame: false };
     PlayerAnimations.Fly = { key: 'fly', isSingleFrame: false };
     PlayerAnimations.Yell = { key: 'yell', isSingleFrame: false };
@@ -640,6 +663,7 @@ var PlayerAnimator = /** @class */ (function (_super) {
 }(Animator));
 var PlayerStats;
 (function (PlayerStats) {
+    PlayerStats.DefaultHitboxHeight = 10;
     PlayerStats.DefaultJumpPower = 218;
     PlayerStats.DefaultRunAcceleration = 20;
     PlayerStats.DefaultRunSpeed = 110;
@@ -649,6 +673,8 @@ var PlayerStats;
     PlayerStats.FlyingGravity = PlayerStats.DefaultGravity * 0.5;
     PlayerStats.FlyingMaxFallSpeed = PlayerStats.DefaultMaxFallSpeed * 0.5;
     PlayerStats.YellRadius = 18;
+    PlayerStats.CrouchDeceleration = 12;
+    PlayerStats.CrouchHitboxHeight = 6;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
@@ -659,6 +685,8 @@ var BaseState = /** @class */ (function () {
     BaseState.prototype.update = function () {
     };
     BaseState.prototype.onCollisionSolved = function (result) {
+    };
+    BaseState.prototype.leave = function () {
     };
     BaseState.prototype.updateMovementControls = function (maxRunSpeed, runAcceleration) {
         if (maxRunSpeed === void 0) { maxRunSpeed = PlayerStats.DefaultRunSpeed; }
@@ -680,12 +708,7 @@ var BaseState = /** @class */ (function () {
             }
         }
         else {
-            if (Math.abs(this.player.speed.x) < runAcceleration) {
-                this.player.speed.x = 0;
-            }
-            else {
-                this.player.speed.x -= runAcceleration * MathHelper.sign(this.player.speed.x);
-            }
+            this.player.decelerate(runAcceleration);
         }
     };
     return BaseState;
@@ -726,6 +749,76 @@ var AirborneState = /** @class */ (function (_super) {
     };
     return AirborneState;
 }(BaseState));
+var GroundedState = /** @class */ (function (_super) {
+    __extends(GroundedState, _super);
+    function GroundedState(player) {
+        return _super.call(this, player) || this;
+    }
+    GroundedState.prototype.enter = function () {
+    };
+    GroundedState.prototype.update = function () {
+        if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames < 3) {
+            this.player.speed.y = -PlayerStats.DefaultJumpPower;
+            this.player.changeState(this.player.jumpState);
+        }
+        else if (Phaser.Input.Keyboard.JustDown(Inputs.Yell)) {
+            this.player.speed.x = 0;
+            this.player.changeState(this.player.yellState);
+        }
+        else if (Phaser.Input.Keyboard.JustDown(Inputs.Crouch)) {
+            this.player.changeState(this.player.crouchState);
+        }
+    };
+    GroundedState.prototype.onCollisionSolved = function (result) {
+        if (!this.hasGroundUnderneath(result.tiles)) {
+            this.player.changeState(this.player.fallState);
+        }
+    };
+    GroundedState.prototype.hasGroundUnderneath = function (tiles) {
+        for (var i = 0; i < tiles.length; i++) {
+            if (!tiles[i].canStandOn) {
+                continue;
+            }
+            if (this.isStandingOnTile(tiles[i])) {
+                return true;
+            }
+        }
+        return false;
+    };
+    GroundedState.prototype.isStandingOnTile = function (tile) {
+        if (tile.hitbox.top == this.player.hitbox.bottom) {
+            return this.player.hitbox.right > tile.hitbox.left && this.player.hitbox.left < tile.hitbox.right;
+        }
+    };
+    return GroundedState;
+}(BaseState));
+/// <reference path="state_grounded.ts"/>
+var CrouchState = /** @class */ (function (_super) {
+    __extends(CrouchState, _super);
+    function CrouchState(player) {
+        return _super.call(this, player) || this;
+    }
+    CrouchState.prototype.enter = function () {
+        this.player.animator.changeAnimation(PlayerAnimations.Crouch);
+        this.player.hitbox.height = PlayerStats.CrouchHitboxHeight;
+        this.player.hitbox.y += (PlayerStats.DefaultHitboxHeight - PlayerStats.CrouchHitboxHeight);
+    };
+    CrouchState.prototype.update = function () {
+        if (Inputs.Crouch.isUp) {
+            this.player.changeState(this.player.speed.x == 0 ? this.player.idleState : this.player.runState);
+        }
+        _super.prototype.update.call(this);
+        this.player.decelerate(PlayerStats.CrouchDeceleration);
+    };
+    CrouchState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
+    };
+    CrouchState.prototype.leave = function () {
+        this.player.hitbox.height = PlayerStats.DefaultHitboxHeight;
+        this.player.hitbox.y -= (PlayerStats.DefaultHitboxHeight - PlayerStats.CrouchHitboxHeight);
+    };
+    return CrouchState;
+}(GroundedState));
 var FallState = /** @class */ (function (_super) {
     __extends(FallState, _super);
     function FallState(player) {
@@ -781,46 +874,6 @@ var FlyState = /** @class */ (function (_super) {
     };
     return FlyState;
 }(AirborneState));
-var GroundedState = /** @class */ (function (_super) {
-    __extends(GroundedState, _super);
-    function GroundedState(player) {
-        return _super.call(this, player) || this;
-    }
-    GroundedState.prototype.enter = function () {
-    };
-    GroundedState.prototype.update = function () {
-        if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames < 3) {
-            this.player.speed.y = -PlayerStats.DefaultJumpPower;
-            this.player.changeState(this.player.jumpState);
-        }
-        else if (Phaser.Input.Keyboard.JustDown(Inputs.Yell)) {
-            this.player.speed.x = 0;
-            this.player.changeState(this.player.yellState);
-        }
-    };
-    GroundedState.prototype.onCollisionSolved = function (result) {
-        if (!this.hasGroundUnderneath(result.tiles)) {
-            this.player.changeState(this.player.fallState);
-        }
-    };
-    GroundedState.prototype.hasGroundUnderneath = function (tiles) {
-        for (var i = 0; i < tiles.length; i++) {
-            if (!tiles[i].canStandOn) {
-                continue;
-            }
-            if (this.isStandingOnTile(tiles[i])) {
-                return true;
-            }
-        }
-        return false;
-    };
-    GroundedState.prototype.isStandingOnTile = function (tile) {
-        if (tile.hitbox.top == this.player.hitbox.bottom) {
-            return this.player.hitbox.right > tile.hitbox.left && this.player.hitbox.left < tile.hitbox.right;
-        }
-    };
-    return GroundedState;
-}(BaseState));
 var IdleState = /** @class */ (function (_super) {
     __extends(IdleState, _super);
     function IdleState(player) {
@@ -912,6 +965,7 @@ var YellState = /** @class */ (function (_super) {
         }
     };
     YellState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
     };
     return YellState;
 }(GroundedState));
@@ -1040,6 +1094,7 @@ var InputManager = /** @class */ (function () {
         Inputs.Left = scene.input.keyboard.addKey('left');
         Inputs.Down = scene.input.keyboard.addKey('down');
         Inputs.Right = scene.input.keyboard.addKey('right');
+        Inputs.Crouch = scene.input.keyboard.addKey('down');
         Inputs.Yell = scene.input.keyboard.addKey('x');
         Inputs.Jump = { key: scene.input.keyboard.addKey('z'), heldDownFrames: 0 };
     }

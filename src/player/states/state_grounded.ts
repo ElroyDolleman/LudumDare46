@@ -17,6 +17,9 @@ class GroundedState extends BaseState
             this.player.speed.x = 0;
             this.player.changeState(this.player.yellState);
         }
+        else if (Phaser.Input.Keyboard.JustDown(Inputs.Crouch)) {
+            this.player.changeState(this.player.crouchState);
+        }
     }
 
     public onCollisionSolved(result: CollisionResult) {

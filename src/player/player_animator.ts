@@ -4,6 +4,8 @@ module PlayerAnimations
     export let Idle = { key: 'playerbird_walk_00.png', isSingleFrame: true };
     export let Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
     export let Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
+    export let Crouch = { key: 'playerbird_crouch_00.png', isSingleFrame: true };
+
     export let Run = { key: 'run', isSingleFrame: false };
     export let Fly = { key: 'fly', isSingleFrame: false };
     export let Yell = { key: 'yell', isSingleFrame: false };
