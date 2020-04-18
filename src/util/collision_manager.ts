@@ -19,7 +19,6 @@ class CollisionManager
         
         let tiles = this.currentLevel.map.getTilesFromRect(actor.hitbox);
         let result: CollisionResult = new CollisionResult();
-        let previousHitbox = actor.hitbox;
         
         if (actor.speed.x != 0) {
             actor.moveHorizontal();

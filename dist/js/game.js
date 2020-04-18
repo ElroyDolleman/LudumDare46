@@ -26,11 +26,13 @@ var PlaygroundScene = /** @class */ (function (_super) {
     };
     PlaygroundScene.prototype.create = function () {
         Scenes.Current = this;
+        this.inputManager = new InputManager(this);
         this.level = this.levelLoader.load('playground01');
         this.player = new Player();
         this.level.collidableActors.push(this.player);
     };
     PlaygroundScene.prototype.update = function (time, delta) {
+        this.inputManager.update();
         this.player.update();
         this.level.update();
     };
@@ -286,6 +288,10 @@ var PlayerAnimator = /** @class */ (function () {
     };
     return PlayerAnimator;
 }());
+var PlayerStats;
+(function (PlayerStats) {
+    PlayerStats.DefaultRunSpeed = 48;
+})(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
         this.player = player;
@@ -343,9 +349,16 @@ var IdleState = /** @class */ (function (_super) {
         return _super.call(this, player) || this;
     }
     IdleState.prototype.enter = function () {
-        this.player.speed.y = 48;
     };
     IdleState.prototype.update = function () {
+        if (Inputs.Left.isDown) {
+            this.player.speed.x = -PlayerStats.DefaultRunSpeed;
+            this.player.changeState(this.player.runState);
+        }
+        if (Inputs.Right.isDown) {
+            this.player.speed.x = PlayerStats.DefaultRunSpeed;
+            this.player.changeState(this.player.runState);
+        }
     };
     IdleState.prototype.onCollisionSolved = function (result) {
     };
@@ -393,7 +406,6 @@ var CollisionManager = /** @class */ (function () {
     CollisionManager.prototype.moveActor = function (actor) {
         var tiles = this.currentLevel.map.getTilesFromRect(actor.hitbox);
         var result = new CollisionResult();
-        var previousHitbox = actor.hitbox;
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
             for (var i = 0; i < tiles.length; i++) {
@@ -477,4 +489,23 @@ var TILE_HEIGHT = 16;
 var Scenes;
 (function (Scenes) {
 })(Scenes || (Scenes = {}));
+var Inputs;
+(function (Inputs) {
+})(Inputs || (Inputs = {}));
+var InputManager = /** @class */ (function () {
+    function InputManager(scene) {
+        Inputs.Left = scene.input.keyboard.addKey('left');
+        Inputs.Right = scene.input.keyboard.addKey('right');
+        Inputs.Jump = { key: scene.input.keyboard.addKey('z'), heldDownFrames: 0 };
+    }
+    InputManager.prototype.update = function () {
+        if (Inputs.Jump.key.isDown) {
+            Inputs.Jump.heldDownFrames++;
+        }
+        else {
+            Inputs.Jump.heldDownFrames = 0;
+        }
+    };
+    return InputManager;
+}());
 //# sourceMappingURL=game.js.map
