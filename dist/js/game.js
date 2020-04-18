@@ -251,7 +251,7 @@ var Tilemap = /** @class */ (function () {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
-        var _this = _super.call(this, new Phaser.Geom.Rectangle(107, 107, 14, 10)) || this;
+        var _this = _super.call(this, new Phaser.Geom.Rectangle(107, 107, 10, 10)) || this;
         _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
         _this.animator = new PlayerAnimator(_this);
         _this.createStates();
@@ -263,6 +263,7 @@ var Player = /** @class */ (function (_super) {
         this.runState = new RunState(this);
         this.fallState = new FallState(this);
         this.jumpState = new JumpState(this);
+        this.flyState = new FlyState(this);
     };
     Player.prototype.update = function () {
         this.currentState.update();
@@ -290,22 +291,27 @@ var PlayerAnimations;
     PlayerAnimations.Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
     PlayerAnimations.Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
     PlayerAnimations.Run = { key: 'run', isSingleFrame: false };
+    PlayerAnimations.Fly = { key: 'fly', isSingleFrame: false };
 })(PlayerAnimations || (PlayerAnimations = {}));
 var PlayerAnimator = /** @class */ (function () {
     function PlayerAnimator(player) {
         this.currentSquish = { timer: 0, startTime: 0, reverseTime: 0, scaleX: 1, scaleY: 1 };
         this.player = player;
-        this.sprite = Scenes.Current.add.sprite(0, 0, 'player', 'playerbird_walk_00.png');
+        this.sprite = Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key);
         this.sprite.setOrigin(0.5, 1);
         this.updatePosition();
         this.createAnimation('run', 'playerbird_walk_', 2);
-        this.sprite.play('run');
+        this.createAnimation('fly', 'playerbird_fly_', 2);
     }
     Object.defineProperty(PlayerAnimator.prototype, "facingDirection", {
         get: function () { return this.sprite.flipX ? -1 : 1; },
-        set: function (dir) {
-            this.sprite.flipX = dir < 0;
-        },
+        set: function (dir) { this.sprite.flipX = dir < 0; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PlayerAnimator.prototype, "frameRate", {
+        get: function () { return this.sprite.anims.frameRate; },
+        set: function (value) { this.sprite.anims.frameRate = value; },
         enumerable: true,
         configurable: true
     });
@@ -314,7 +320,6 @@ var PlayerAnimator = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    ;
     PlayerAnimator.prototype.update = function () {
         if (this.player.speed.x > 0) {
             this.sprite.flipX = false;
@@ -385,6 +390,9 @@ var PlayerStats;
     PlayerStats.DefaultRunSpeed = 110;
     PlayerStats.DefaultGravity = 16;
     PlayerStats.DefaultMaxFallSpeed = 240;
+    PlayerStats.FlyPower = 128;
+    PlayerStats.FlyingGravity = PlayerStats.DefaultGravity * 0.5;
+    PlayerStats.FlyingMaxFallSpeed = PlayerStats.DefaultMaxFallSpeed * 0.5;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
@@ -472,12 +480,50 @@ var FallState = /** @class */ (function (_super) {
     };
     FallState.prototype.update = function () {
         this.updateMovementControls();
-        this.updateGravity();
+        if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames <= 1) {
+            this.player.changeState(this.player.flyState);
+        }
+        else {
+            this.updateGravity();
+        }
     };
     FallState.prototype.onCollisionSolved = function (result) {
         _super.prototype.onCollisionSolved.call(this, result);
     };
     return FallState;
+}(AirborneState));
+var FlyState = /** @class */ (function (_super) {
+    __extends(FlyState, _super);
+    function FlyState(player) {
+        return _super.call(this, player) || this;
+    }
+    FlyState.prototype.enter = function () {
+        this.player.animator.changeAnimation(PlayerAnimations.Fly);
+        this.player.speed.y = -PlayerStats.FlyPower;
+    };
+    FlyState.prototype.update = function () {
+        this.updateMovementControls();
+        if (Inputs.Down.isDown) {
+            this.player.speed.y = Math.max(this.player.speed.y, -10);
+            this.player.changeState(this.player.fallState);
+        }
+        else if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames <= 1) {
+            this.player.speed.y = -PlayerStats.FlyPower;
+        }
+        else {
+            this.updateGravity(PlayerStats.FlyingGravity, PlayerStats.FlyingMaxFallSpeed);
+        }
+        if (this.player.speed.y < 0) {
+            this.player.animator.sprite.anims.setTimeScale(1);
+        }
+        else {
+            this.player.animator.sprite.anims.setTimeScale(0.5);
+        }
+    };
+    FlyState.prototype.onCollisionSolved = function (result) {
+        _super.prototype.onCollisionSolved.call(this, result);
+    };
+    return FlyState;
 }(AirborneState));
 var GroundedState = /** @class */ (function (_super) {
     __extends(GroundedState, _super);
@@ -555,9 +601,10 @@ var JumpState = /** @class */ (function (_super) {
             this.heldDownFrames++;
             this.player.speed.y -= PlayerStats.DefaultGravity - 8;
         }
-        // if (this.player.speed.y >= -18) {
-        //     this.player.speed.y -= 8;
-        // }
+        else if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames <= 1) {
+            this.player.changeState(this.player.flyState);
+            return;
+        }
         this.updateGravity();
         if (this.player.speed.y >= 0) {
             this.player.changeState(this.player.fallState);
@@ -702,7 +749,9 @@ var Inputs;
 })(Inputs || (Inputs = {}));
 var InputManager = /** @class */ (function () {
     function InputManager(scene) {
+        Inputs.Up = scene.input.keyboard.addKey('up');
         Inputs.Left = scene.input.keyboard.addKey('left');
+        Inputs.Down = scene.input.keyboard.addKey('down');
         Inputs.Right = scene.input.keyboard.addKey('right');
         Inputs.Jump = { key: scene.input.keyboard.addKey('z'), heldDownFrames: 0 };
     }

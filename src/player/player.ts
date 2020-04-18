@@ -7,12 +7,13 @@ class Player extends Actor
     public runState: RunState;
     public fallState: FallState;
     public jumpState: JumpState;
+    public flyState: FlyState;
 
     public animator: PlayerAnimator;
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
     constructor() {
-        super(new Phaser.Geom.Rectangle(107, 107, 14, 10));
+        super(new Phaser.Geom.Rectangle(107, 107, 10, 10));
         this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
 
         this.animator = new PlayerAnimator(this);
@@ -26,6 +27,7 @@ class Player extends Actor
         this.runState = new RunState(this);
         this.fallState = new FallState(this);
         this.jumpState = new JumpState(this);
+        this.flyState = new FlyState(this);
     }
 
     public update() {

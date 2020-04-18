@@ -23,10 +23,10 @@ class JumpState extends AirborneState
             this.heldDownFrames++;
             this.player.speed.y -= PlayerStats.DefaultGravity - 8;
         }
-
-        // if (this.player.speed.y >= -18) {
-        //     this.player.speed.y -= 8;
-        // }
+        else if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames <= 1) {
+            this.player.changeState(this.player.flyState);
+            return;
+        }
 
         this.updateGravity();
 

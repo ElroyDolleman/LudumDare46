@@ -4,6 +4,7 @@ module PlayerAnimations
     export let Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
     export let Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
     export let Run = { key: 'run', isSingleFrame: false };
+    export let Fly = { key: 'fly', isSingleFrame: false };
 }
 
 class PlayerAnimator
@@ -12,22 +13,22 @@ class PlayerAnimator
     public sprite: Phaser.GameObjects.Sprite;
 
     public get facingDirection(): number { return this.sprite.flipX ? -1 : 1; }
-    public set facingDirection(dir) {
-        this.sprite.flipX = dir < 0;
-    }
+    public set facingDirection(dir: number) { this.sprite.flipX = dir < 0; }
+    public get frameRate(): number { return this.sprite.anims.frameRate; }
+    public set frameRate(value: number) { this.sprite.anims.frameRate = value; }
 
     private currentSquish: { timer: number, startTime: number, reverseTime: number, scaleX: number, scaleY: number } = { timer: 0, startTime: 0, reverseTime: 0, scaleX: 1, scaleY: 1 };
-    public get isSquishing(): boolean { return this.currentSquish.timer > 0; };
+    public get isSquishing(): boolean { return this.currentSquish.timer > 0; }
 
     constructor(player: Player) {
 
         this.player = player;
-        this.sprite = Scenes.Current.add.sprite(0, 0, 'player', 'playerbird_walk_00.png');
+        this.sprite = Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key);
         this.sprite.setOrigin(0.5, 1);
         this.updatePosition();
 
         this.createAnimation('run', 'playerbird_walk_', 2);
-        this.sprite.play('run');
+        this.createAnimation('fly', 'playerbird_fly_', 2);
     }
 
     public update() {
@@ -54,7 +55,6 @@ class PlayerAnimator
         else {
             this.sprite.play(animation.key);
         }
-        
     }
     private createAnimation(key: string, prefix: string, length: number, frameRate: number = 16) {
         let frameNames = Scenes.Current.anims.generateFrameNames('player', { 

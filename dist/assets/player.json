@@ -4,8 +4,8 @@
 			"image": "player.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 41,
-				"h": 41
+				"w": 48,
+				"h": 48
 			},
 			"scale": 1,
 			"frames": [
@@ -66,14 +66,14 @@
 						"h": 14
 					},
 					"frame": {
-						"x": 0,
-						"y": 15,
+						"x": 32,
+						"y": 0,
 						"w": 16,
 						"h": 14
 					}
 				},
 				{
-					"filename": "playerbird_walk_01.png",
+					"filename": "playerbird_fly_01.png",
 					"rotated": false,
 					"trimmed": true,
 					"sourceSize": {
@@ -82,15 +82,15 @@
 					},
 					"spriteSourceSize": {
 						"x": 0,
-						"y": 4,
+						"y": 2,
 						"w": 16,
-						"h": 12
+						"h": 14
 					},
 					"frame": {
-						"x": 0,
-						"y": 29,
+						"x": 32,
+						"y": 14,
 						"w": 16,
-						"h": 12
+						"h": 14
 					}
 				},
 				{
@@ -108,8 +108,8 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 16,
-						"y": 15,
+						"x": 0,
+						"y": 28,
 						"w": 16,
 						"h": 13
 					}
@@ -129,10 +129,31 @@
 						"h": 13
 					},
 					"frame": {
-						"x": 16,
-						"y": 28,
+						"x": 0,
+						"y": 15,
 						"w": 16,
 						"h": 13
+					}
+				},
+				{
+					"filename": "playerbird_walk_01.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 4,
+						"w": 16,
+						"h": 12
+					},
+					"frame": {
+						"x": 16,
+						"y": 15,
+						"w": 16,
+						"h": 12
 					}
 				}
 			]
@@ -141,6 +162,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:b742bea3c9bea9414402de74f3d4b382:8b00a40d6ba8f29bdce626ad1771f676:86d5339b780aedd87b35e2b7c0a7e11b$"
+		"smartupdate": "$TexturePacker:SmartUpdate:9cb08ff21f220a3c0befb52fa4910670:47b9f0f0c5613a79c0e427edc64485c5:86d5339b780aedd87b35e2b7c0a7e11b$"
 	}
 }

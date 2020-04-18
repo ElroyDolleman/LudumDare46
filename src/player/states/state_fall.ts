@@ -10,7 +10,13 @@ class FallState extends AirborneState
  
     public update() {
         this.updateMovementControls();
-        this.updateGravity();
+
+        if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames <= 1) {
+            this.player.changeState(this.player.flyState);
+        }
+        else {
+            this.updateGravity();
+        }
     }
 
     public onCollisionSolved(result: CollisionResult) {

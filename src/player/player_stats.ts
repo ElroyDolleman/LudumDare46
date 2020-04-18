@@ -6,4 +6,8 @@ module PlayerStats
 
     export const DefaultGravity = 16;
     export const DefaultMaxFallSpeed = 240;
+    
+    export const FlyPower = 128;
+    export const FlyingGravity = DefaultGravity * 0.5;
+    export const FlyingMaxFallSpeed = DefaultMaxFallSpeed * 0.5;
 }
