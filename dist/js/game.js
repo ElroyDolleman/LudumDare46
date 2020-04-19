@@ -162,7 +162,7 @@ var Baby = /** @class */ (function (_super) {
         }
     };
     Baby.prototype.onCollisionSolved = function (result) {
-        if (result.isCrushed) {
+        if (result.isCrushed || result.isDamaged) {
             this.disappearDie();
             return;
         }

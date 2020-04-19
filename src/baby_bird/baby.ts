@@ -66,7 +66,7 @@ class Baby extends Actor
     }
 
     public onCollisionSolved(result: CollisionResult) {
-        if (result.isCrushed) {
+        if (result.isCrushed || result.isDamaged) {
             this.disappearDie();
             return;
         }
