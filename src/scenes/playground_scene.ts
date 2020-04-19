@@ -22,7 +22,7 @@ class PlaygroundScene extends Phaser.Scene {
         Scenes.Current = this;
 
         this.inputManager = new InputManager(this);
-        this.level = this.levelLoader.load('playground01');
+        this.level = this.levelLoader.load('level02');
         CurrentLevel = this.level;
 
         this.player = new Player();
@@ -31,6 +31,8 @@ class PlaygroundScene extends Phaser.Scene {
         this.player.x = this.level.goalPos.x - this.player.hitbox.width / 2;
         this.player.y = this.level.goalPos.y - this.player.hitbox.height;
         this.player.animator.facingDirection = MathHelper.sign(this.baby.x - this.player.x);
+        this.baby.x = this.level.babySpawn.x;
+        this.baby.y = this.level.babySpawn.y;
 
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);

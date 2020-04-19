@@ -303,7 +303,7 @@
  </tile>
  <tile id="58">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="tiletype" value="baby_spawn"/>
   </properties>
  </tile>
  <tile id="59">

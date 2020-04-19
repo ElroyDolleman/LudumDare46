@@ -7,6 +7,7 @@ class LevelLoader {
     public readonly scene: Phaser.Scene;
 
     private goalPieces: Phaser.Geom.Point[];
+    private babySpawn: Phaser.Math.Vector2;
 
     constructor(scene:Phaser.Scene) { 
         this.scene = scene;
@@ -18,10 +19,12 @@ class LevelLoader {
 
     public load(name:string):Level {
         this.goalPieces = [];
+        this.babySpawn = new Phaser.Math.Vector2();
+
         let levelJson = this.scene.cache.json.get('levels')[name];
         let map = this.createTilemap(levelJson);
 
-        return new Level(map, this.goalPieces);
+        return new Level(map, this.goalPieces, this.babySpawn);
     }
 
     private createTilemap(levelJson: any):Tilemap {
@@ -50,8 +53,11 @@ class LevelLoader {
                 rotation = this.getRotation(tileId);
                 tileId &= ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG);
             }
-
-            if (tileId >= 0) {
+            if (levelJson['babySpawnTileId'] == tileId) {
+                this.babySpawn.x = x + width / 2;
+                this.babySpawn.y = y + height / 2;
+            }
+            else if (tileId >= 0) {
                 sprite = this.scene.add.sprite(x + TILE_WIDTH / 2, y + TILE_WIDTH / 2, tilesetName, tileId);
                 sprite.setOrigin(0.5, 0.5);
                 sprite.setRotation(rotation);

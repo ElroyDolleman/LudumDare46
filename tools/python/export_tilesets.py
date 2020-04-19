@@ -24,6 +24,7 @@ for filename in os.listdir(directory):
     tileset_file = open(tileset_path, 'r')
     tileset_content = tileset_file.read()
     tile_id = -1
+    baby_spawn = -1
     tiles_solid = []
     tiles_semisolid = []
     tiles_spikes = []
@@ -51,6 +52,8 @@ for filename in os.listdir(directory):
         elif 'onoff_' in line:
             onoff_type = line.split('onoff_', 1)[1].replace('"/>', '')
             tiles_onoff[onoff_type].append(tile_id)
+        elif '"tiletype"' in line and 'baby_spawn' in line:
+            baby_spawn = tile_id
             
     tileset_file.close()
     
@@ -66,6 +69,7 @@ for filename in os.listdir(directory):
         'spikes': tiles_spikes,
         'goal': tiles_goal,
         'customHitboxes': custom_hitboxes,
+        'babySpawnTileId': baby_spawn
     }
     json_ouput[filename.decode('utf-8').replace('.json', '')] = json_line
 

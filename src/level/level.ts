@@ -5,11 +5,13 @@ class Level
     public collidableActors: Actor[];
     public goalPieces: Tile[];
     public goalPos: Phaser.Math.Vector2;
+    public babySpawn: Phaser.Math.Vector2;
 
-    constructor(map: Tilemap, goalPieces: Phaser.Geom.Point[]) {
+    constructor(map: Tilemap, goalPieces: Phaser.Geom.Point[], babySpawn: Phaser.Math.Vector2) {
         this.collisionManager = new CollisionManager(this);
         this.collidableActors = [];
         this.map = map;
+        this.babySpawn = babySpawn;
 
         this.goalPieces = [];
         goalPieces.forEach((pos) => {

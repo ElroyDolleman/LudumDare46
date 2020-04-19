@@ -30,7 +30,7 @@ var PlaygroundScene = /** @class */ (function (_super) {
     PlaygroundScene.prototype.create = function () {
         Scenes.Current = this;
         this.inputManager = new InputManager(this);
-        this.level = this.levelLoader.load('playground01');
+        this.level = this.levelLoader.load('level02');
         CurrentLevel = this.level;
         this.player = new Player();
         this.baby = new Baby(this.player);
@@ -38,6 +38,8 @@ var PlaygroundScene = /** @class */ (function (_super) {
         this.player.x = this.level.goalPos.x - this.player.hitbox.width / 2;
         this.player.y = this.level.goalPos.y - this.player.hitbox.height;
         this.player.animator.facingDirection = MathHelper.sign(this.baby.x - this.player.x);
+        this.baby.x = this.level.babySpawn.x;
+        this.baby.y = this.level.babySpawn.y;
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
     };
@@ -524,11 +526,12 @@ var BabyWalkState = /** @class */ (function (_super) {
     return BabyWalkState;
 }(BabyGroundedState));
 var Level = /** @class */ (function () {
-    function Level(map, goalPieces) {
+    function Level(map, goalPieces, babySpawn) {
         var _this = this;
         this.collisionManager = new CollisionManager(this);
         this.collidableActors = [];
         this.map = map;
+        this.babySpawn = babySpawn;
         this.goalPieces = [];
         goalPieces.forEach(function (pos) {
             _this.goalPieces.push(_this.map.getTile(pos.x, pos.y));
@@ -581,9 +584,10 @@ var LevelLoader = /** @class */ (function () {
     };
     LevelLoader.prototype.load = function (name) {
         this.goalPieces = [];
+        this.babySpawn = new Phaser.Math.Vector2();
         var levelJson = this.scene.cache.json.get('levels')[name];
         var map = this.createTilemap(levelJson);
-        return new Level(map, this.goalPieces);
+        return new Level(map, this.goalPieces, this.babySpawn);
     };
     LevelLoader.prototype.createTilemap = function (levelJson) {
         var tilesetName = levelJson['tileset'];
@@ -606,7 +610,11 @@ var LevelLoader = /** @class */ (function () {
                 rotation = this.getRotation(tileId);
                 tileId &= ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG);
             }
-            if (tileId >= 0) {
+            if (levelJson['babySpawnTileId'] == tileId) {
+                this.babySpawn.x = x + width / 2;
+                this.babySpawn.y = y + height / 2;
+            }
+            else if (tileId >= 0) {
                 sprite = this.scene.add.sprite(x + TILE_WIDTH / 2, y + TILE_WIDTH / 2, tilesetName, tileId);
                 sprite.setOrigin(0.5, 0.5);
                 sprite.setRotation(rotation);
