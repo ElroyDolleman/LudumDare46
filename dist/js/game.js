@@ -58,6 +58,7 @@ var config = {
 var game = new Phaser.Game(config);
 var Actor = /** @class */ (function () {
     function Actor(hitbox) {
+        this.canTriggerOnOffSwitch = false;
         this.speed = new Phaser.Math.Vector2();
         this.hitbox = hitbox;
     }
@@ -79,6 +80,9 @@ var Actor = /** @class */ (function () {
         configurable: true
     });
     Actor.prototype.update = function () {
+        if (this.canTriggerOnOffSwitch && this.currentSwitch && !Phaser.Geom.Rectangle.Overlaps(this.currentSwitch.hitbox, this.hitbox)) {
+            this.currentSwitch = null;
+        }
     };
     Actor.prototype.moveHorizontal = function () {
         this.x += this.speed.x * GameTime.getElapsed();
@@ -99,11 +103,12 @@ var Baby = /** @class */ (function (_super) {
     function Baby(mommy) {
         var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 283, 5, 5)) || this;
         _this.mommy = mommy;
-        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        _this.canTriggerOnOffSwitch = true;
         _this.animator = new BabyAnimator(_this);
         _this.createStates();
         _this.changeState(_this.walkState);
         return _this;
+        //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
     Object.defineProperty(Baby.prototype, "isDead", {
         get: function () { return this.currentState == this.deadState; },
@@ -468,22 +473,34 @@ var LevelLoader = /** @class */ (function () {
             if (tileId >= 0) {
                 sprite = this.scene.add.sprite(x, y, tilesetName, tileId);
                 sprite.setOrigin(0, 0);
-                if (levelJson['solidTiles'].indexOf(tileId) >= 0) {
-                    tiletype = TileTypes.Solid;
-                }
-                else if (levelJson['semisolidTiles'].indexOf(tileId) >= 0) {
-                    tiletype = TileTypes.Semisolid;
-                }
-                else
-                    continue;
-                var hitboxData = levelJson['customHitboxes'][tileId.toString()];
-                if (hitboxData) {
-                    height = hitboxData['height'];
+                tiletype = this.getTileType(levelJson, tileId);
+                if (tiletype != TileTypes.Empty) {
+                    var hitboxData = levelJson['customHitboxes'][tileId.toString()];
+                    if (hitboxData) {
+                        height = hitboxData['height'];
+                    }
                 }
             }
             tiles.push(new Tile(sprite, x, y, width, height, row, col, tiletype));
         }
         return new Tilemap(tiles, columns, rows);
+    };
+    LevelLoader.prototype.getTileType = function (levelJson, tileId) {
+        switch (true) {
+            case levelJson['solidTiles'].indexOf(tileId) >= 0:
+                return TileTypes.Solid;
+            case levelJson['semisolidTiles'].indexOf(tileId) >= 0:
+                return TileTypes.Semisolid;
+            case levelJson['onoff']['switch_a'].indexOf(tileId) >= 0:
+            case levelJson['onoff']['switch_b'].indexOf(tileId) >= 0:
+                return TileTypes.OnOffSwitch;
+            case levelJson['onoff']['block_a'].indexOf(tileId) >= 0:
+                return TileTypes.OnOffBlockA;
+            case levelJson['onoff']['block_b'].indexOf(tileId) >= 0:
+                return TileTypes.OnOffBlockB;
+            default:
+                return TileTypes.Empty;
+        }
     };
     return LevelLoader;
 }());
@@ -492,6 +509,9 @@ var TileTypes;
     TileTypes[TileTypes["Empty"] = 0] = "Empty";
     TileTypes[TileTypes["Solid"] = 1] = "Solid";
     TileTypes[TileTypes["Semisolid"] = 2] = "Semisolid";
+    TileTypes[TileTypes["OnOffSwitch"] = 3] = "OnOffSwitch";
+    TileTypes[TileTypes["OnOffBlockA"] = 4] = "OnOffBlockA";
+    TileTypes[TileTypes["OnOffBlockB"] = 5] = "OnOffBlockB";
 })(TileTypes || (TileTypes = {}));
 var Tile = /** @class */ (function () {
     function Tile(sprite, x, y, width, height, col, row, type) {
@@ -502,6 +522,9 @@ var Tile = /** @class */ (function () {
         this.type = type ? type : TileTypes.Empty;
         this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xfa8900, alpha: 0.5 } });
         //if (this.canStandOn) this.drawHitbox();
+        if (this.isEffectedByOnOffState) {
+            OnOffState.StateEvents.addListener('switched', this.onOnOffStateChanged, this);
+        }
     }
     Object.defineProperty(Tile.prototype, "position", {
         get: function () { return new Phaser.Geom.Point(this.hitbox.x, this.hitbox.y); },
@@ -509,7 +532,7 @@ var Tile = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(Tile.prototype, "isSolid", {
-        get: function () { return this.type == TileTypes.Solid; },
+        get: function () { return this.type == TileTypes.Solid || this.type == OnOffState.CurrentOnType; },
         enumerable: true,
         configurable: true
     });
@@ -523,6 +546,21 @@ var Tile = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Tile.prototype, "isOnOffSwitch", {
+        get: function () { return this.type == TileTypes.OnOffSwitch; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Tile.prototype, "isOnOffBlock", {
+        get: function () { return this.type == TileTypes.OnOffBlockA || this.type == TileTypes.OnOffBlockB; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Tile.prototype, "isEffectedByOnOffState", {
+        get: function () { return this.isOnOffSwitch || this.isOnOffBlock; },
+        enumerable: true,
+        configurable: true
+    });
     Tile.prototype.drawHitbox = function () {
         this.debugGraphics.clear();
         this.debugGraphics.depth = 10;
@@ -530,6 +568,36 @@ var Tile = /** @class */ (function () {
     };
     Tile.prototype.clearHitbox = function () {
         this.debugGraphics.clear();
+    };
+    Tile.prototype.triggerSwitch = function (actor) {
+        if (actor.currentSwitch == null) {
+            OnOffState.SwitchState();
+            actor.currentSwitch = this;
+        }
+    };
+    Tile.prototype.onOnOffStateChanged = function () {
+        if (this.isOnOffSwitch) {
+            if (this.sprite.frame.name == (36).toString()) {
+                this.sprite.setFrame(37);
+            }
+            else if (this.sprite.frame.name == (37).toString()) {
+                this.sprite.setFrame(36);
+            }
+        }
+        else if (this.isOnOffBlock) {
+            if (this.sprite.frame.name == (42).toString()) {
+                this.sprite.setFrame(45);
+            }
+            else if (this.sprite.frame.name == (45).toString()) {
+                this.sprite.setFrame(42);
+            }
+            else if (this.sprite.frame.name == (43).toString()) {
+                this.sprite.setFrame(44);
+            }
+            else if (this.sprite.frame.name == (44).toString()) {
+                this.sprite.setFrame(43);
+            }
+        }
     };
     return Tile;
 }());
@@ -591,12 +659,13 @@ var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 262, 10, 10)) || this;
-        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        _this.canTriggerOnOffSwitch = true;
         _this.animator = new PlayerAnimator(_this);
         _this.createStates();
         _this.currentState = _this.idleState;
         _this.currentState.enter();
         return _this;
+        //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
     Object.defineProperty(Player.prototype, "bounceHitbox", {
         get: function () { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); },
@@ -634,6 +703,7 @@ var Player = /** @class */ (function (_super) {
         if (this.baby.isDead && this.currentState != this.panicState) {
             this.changeState(this.panicState);
         }
+        _super.prototype.update.call(this);
     };
     Player.prototype.changeState = function (newState) {
         this.currentState.leave();
@@ -646,7 +716,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.onCollisionSolved = function (result) {
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
-        this.drawHitbox();
+        //this.drawHitbox();
     };
     Player.prototype.decelerate = function (deceleration) {
         if (Math.abs(this.speed.x) < deceleration) {
@@ -1074,7 +1144,13 @@ var CollisionManager = /** @class */ (function () {
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
             for (var i = 0; i < tiles.length; i++) {
-                if (!tiles[i].isSolid || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                if (!Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                    continue;
+                }
+                if (!tiles[i].isSolid) {
+                    if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                        tiles[i].triggerSwitch(actor);
+                    }
                     continue;
                 }
                 if (actor.speed.x > 0) {
@@ -1090,7 +1166,13 @@ var CollisionManager = /** @class */ (function () {
         if (actor.speed.y != 0) {
             actor.moveVertical();
             for (var i = 0; i < tiles.length; i++) {
-                if (!tiles[i].canStandOn || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                if (!Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                    continue;
+                }
+                if (!tiles[i].canStandOn) {
+                    if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                        tiles[i].triggerSwitch(actor);
+                    }
                     continue;
                 }
                 if (tiles[i].isSemisolid) {
@@ -1195,4 +1277,32 @@ var MathHelper;
     }
     MathHelper.sign = sign;
 })(MathHelper || (MathHelper = {}));
+var OnOffState;
+(function (OnOffState) {
+    OnOffState.CurrentOnType = TileTypes.OnOffBlockA;
+    OnOffState.CurrentOffType = TileTypes.OnOffBlockB;
+    OnOffState.StateEvents = new Phaser.Events.EventEmitter();
+    function SwitchState() {
+        if (OnOffState.CurrentOnType == TileTypes.OnOffBlockA) {
+            OnOffState.CurrentOnType = TileTypes.OnOffBlockB;
+            OnOffState.CurrentOffType = TileTypes.OnOffBlockA;
+        }
+        else {
+            OnOffState.CurrentOnType = TileTypes.OnOffBlockA;
+            OnOffState.CurrentOffType = TileTypes.OnOffBlockB;
+        }
+        OnOffState.StateEvents.emit('switched');
+    }
+    OnOffState.SwitchState = SwitchState;
+    function ForceState(state) {
+        OnOffState.CurrentOnType = state;
+        if (state == TileTypes.OnOffBlockA) {
+            OnOffState.CurrentOffType = TileTypes.OnOffBlockB;
+        }
+        else {
+            OnOffState.CurrentOffType = TileTypes.OnOffBlockA;
+        }
+    }
+    OnOffState.ForceState = ForceState;
+})(OnOffState || (OnOffState = {}));
 //# sourceMappingURL=game.js.map

@@ -9,12 +9,18 @@ class Actor
     public set y(y) { this.hitbox.y = y; }
     public get position(): Phaser.Math.Vector2 { return new Phaser.Math.Vector2(this.x, this.y); }
 
+    public canTriggerOnOffSwitch: boolean = false;
+    public currentSwitch: Tile;
+
     constructor(hitbox: Phaser.Geom.Rectangle) {
         this.speed = new Phaser.Math.Vector2();
         this.hitbox = hitbox;
     }
 
     public update() {
+        if (this.canTriggerOnOffSwitch && this.currentSwitch && !Phaser.Geom.Rectangle.Overlaps(this.currentSwitch.hitbox, this.hitbox)) {
+            this.currentSwitch = null;
+        }
     }
 
     public moveHorizontal() {
@@ -24,7 +30,7 @@ class Actor
         this.y += this.speed.y * GameTime.getElapsed();
     }
 
-    public onCollisionSolved(result: CollisionResult) {   
+    public onCollisionSolved(result: CollisionResult) {
     }
 
     public calculateNextHitbox():Phaser.Geom.Rectangle {

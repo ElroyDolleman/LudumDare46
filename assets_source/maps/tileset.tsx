@@ -183,12 +183,12 @@
  </tile>
  <tile id="36">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="tiletype" value="onoff_switch_a"/>
   </properties>
  </tile>
  <tile id="37">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="tiletype" value="onoff_switch_b"/>
   </properties>
  </tile>
  <tile id="38">
@@ -213,22 +213,22 @@
  </tile>
  <tile id="42">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="tiletype" value="onoff_block_a"/>
   </properties>
  </tile>
  <tile id="43">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="tiletype" value="onoff_block_b"/>
   </properties>
  </tile>
  <tile id="44">
   <properties>
-   <property name="tiletype" value="solid"/>
+   <property name="tiletype" value="onoff_block_b"/>
   </properties>
  </tile>
  <tile id="45">
   <properties>
-   <property name="tiletype" value="solid"/>
+   <property name="tiletype" value="onoff_block_a"/>
   </properties>
  </tile>
  <tile id="46">

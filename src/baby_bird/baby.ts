@@ -17,12 +17,14 @@ class Baby extends Actor
     constructor(mommy: Player) {
         super(new Phaser.Geom.Rectangle(16, 283, 5, 5));
         this.mommy = mommy;
-        this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        this.canTriggerOnOffSwitch = true;
 
         this.animator = new BabyAnimator(this);
 
         this.createStates();
         this.changeState(this.walkState);
+
+        //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
 
     private createStates() {

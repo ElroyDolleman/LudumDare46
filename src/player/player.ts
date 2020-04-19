@@ -28,13 +28,15 @@ class Player extends Actor
 
     constructor() {
         super(new Phaser.Geom.Rectangle(16, 262, 10, 10));
-        this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
+        this.canTriggerOnOffSwitch = true;
 
         this.animator = new PlayerAnimator(this);
 
         this.createStates();
         this.currentState = this.idleState;
         this.currentState.enter();
+
+        //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
 
     private createStates() {
@@ -55,6 +57,7 @@ class Player extends Actor
         if (this.baby.isDead && this.currentState != this.panicState) {
             this.changeState(this.panicState);
         }
+        super.update();
     }
 
     public changeState(newState: BaseState) {

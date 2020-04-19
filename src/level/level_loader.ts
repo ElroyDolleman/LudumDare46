@@ -42,17 +42,13 @@ class LevelLoader {
                 sprite = this.scene.add.sprite(x, y, tilesetName, tileId);
                 sprite.setOrigin(0, 0);
 
-                if (levelJson['solidTiles'].indexOf(tileId) >= 0) {
-                    tiletype = TileTypes.Solid;
-                }
-                else if (levelJson['semisolidTiles'].indexOf(tileId) >= 0) {
-                    tiletype = TileTypes.Semisolid;
-                }
-                else continue;
+                tiletype = this.getTileType(levelJson, tileId);
 
-                let hitboxData = levelJson['customHitboxes'][tileId.toString()];
-                if (hitboxData) {
-                    height = hitboxData['height'];
+                if (tiletype != TileTypes.Empty) {
+                    let hitboxData = levelJson['customHitboxes'][tileId.toString()];
+                    if (hitboxData) {
+                        height = hitboxData['height'];
+                    }
                 }
             }
 
@@ -60,5 +56,27 @@ class LevelLoader {
         }
         
         return new Tilemap(tiles, columns, rows);
+    }
+
+    private getTileType(levelJson: any, tileId: number):TileTypes {
+        switch(true) {
+            case levelJson['solidTiles'].indexOf(tileId) >= 0:
+                return TileTypes.Solid;
+
+            case levelJson['semisolidTiles'].indexOf(tileId) >= 0:
+                return TileTypes.Semisolid;
+
+            case levelJson['onoff']['switch_a'].indexOf(tileId) >= 0:
+            case levelJson['onoff']['switch_b'].indexOf(tileId) >= 0:
+                return TileTypes.OnOffSwitch;
+
+            case levelJson['onoff']['block_a'].indexOf(tileId) >= 0:
+                return TileTypes.OnOffBlockA;
+            case levelJson['onoff']['block_b'].indexOf(tileId) >= 0:
+                return TileTypes.OnOffBlockB;
+
+            default:
+                return TileTypes.Empty;
+        }
     }
 }

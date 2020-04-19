@@ -31,7 +31,13 @@ class CollisionManager
         if (actor.speed.x != 0) {
             actor.moveHorizontal();
             for (let i = 0; i < tiles.length; i++) {
-                if (!tiles[i].isSolid || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                if (!Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                    continue;
+                }
+                if (!tiles[i].isSolid) {
+                    if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                        tiles[i].triggerSwitch(actor);
+                    }
                     continue;
                 }
 
@@ -49,7 +55,13 @@ class CollisionManager
         if (actor.speed.y != 0) {
             actor.moveVertical();
             for (let i = 0; i < tiles.length; i++) {
-                if (!tiles[i].canStandOn || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                if (!Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                    continue;
+                }
+                if (!tiles[i].canStandOn) {
+                    if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                        tiles[i].triggerSwitch(actor);
+                    }
                     continue;
                 }
                 if (tiles[i].isSemisolid) {
