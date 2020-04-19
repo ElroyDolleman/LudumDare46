@@ -71,8 +71,10 @@ class LevelLoader {
 
                     let hitboxData = levelJson['customHitboxes'][tileId.toString()];
                     if (hitboxData) {
-                        if (hitboxData['height']) height = hitboxData['height'];
+                        if (hitboxData['x']) x += hitboxData['x'];
                         if (hitboxData['y']) y += hitboxData['y'];
+                        if (hitboxData['width']) width = hitboxData['width'];
+                        if (hitboxData['height']) height = hitboxData['height'];
                     }
                 }
             }

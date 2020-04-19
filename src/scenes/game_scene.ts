@@ -17,7 +17,7 @@ class GameScene extends Phaser.Scene {
     public levelLoader: LevelLoader;
     public levelState: LevelStates;
     public level: Level;
-    public currentLevelNumber = 1;
+    public currentLevelNumber = 4;
 
     public get currentLevelName(): string { return 'level' + ('0' + this.currentLevelNumber).slice(-2); }
 
@@ -102,7 +102,7 @@ class GameScene extends Phaser.Scene {
     }
 
     nextLevel() {
-        if (this.currentLevelNumber == 3) {
+        if (this.currentLevelNumber >= 4) {
             console.log("END OF GAME");
             return;
         }

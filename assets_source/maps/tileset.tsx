@@ -308,12 +308,17 @@
  </tile>
  <tile id="59">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="8"/>
+   <property name="hitbox_width" type="int" value="8"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="60">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="8"/>
+   <property name="hitbox_width" type="int" value="8"/>
+   <property name="hitbox_x" type="int" value="8"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="61">

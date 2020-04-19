@@ -24,7 +24,7 @@ var GameScene = /** @class */ (function (_super) {
     function GameScene() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.prevOnState = OnOffState.CurrentOnType;
-        _this.currentLevelNumber = 1;
+        _this.currentLevelNumber = 4;
         return _this;
     }
     Object.defineProperty(GameScene.prototype, "currentLevelName", {
@@ -101,7 +101,7 @@ var GameScene = /** @class */ (function (_super) {
         }
     };
     GameScene.prototype.nextLevel = function () {
-        if (this.currentLevelNumber == 3) {
+        if (this.currentLevelNumber >= 4) {
             console.log("END OF GAME");
             return;
         }
@@ -700,10 +700,14 @@ var LevelLoader = /** @class */ (function () {
                     }
                     var hitboxData = levelJson['customHitboxes'][tileId.toString()];
                     if (hitboxData) {
-                        if (hitboxData['height'])
-                            height = hitboxData['height'];
+                        if (hitboxData['x'])
+                            x += hitboxData['x'];
                         if (hitboxData['y'])
                             y += hitboxData['y'];
+                        if (hitboxData['width'])
+                            width = hitboxData['width'];
+                        if (hitboxData['height'])
+                            height = hitboxData['height'];
                     }
                 }
             }

@@ -45,6 +45,10 @@ for filename in os.listdir(directory):
         elif 'hitbox' in line:
             if not str(tile_id) in custom_hitboxes:
                 custom_hitboxes[str(tile_id)] = {}
+            if '"hitbox_x"' in line:
+                custom_hitboxes[str(tile_id)]['x'] = int(line.split('value="', 1)[1].replace('"/>', ''))
+            if '"hitbox_width"' in line:
+                custom_hitboxes[str(tile_id)]['width'] = int(line.split('value="', 1)[1].replace('"/>', ''))
             if '"hitbox_y"' in line:
                 custom_hitboxes[str(tile_id)]['y'] = int(line.split('value="', 1)[1].replace('"/>', ''))
             if '"hitbox_height"' in line:
