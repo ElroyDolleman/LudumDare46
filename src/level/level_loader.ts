@@ -33,6 +33,8 @@ class LevelLoader {
             let row:number = Math.floor(i / columns);
             let x:number = col * TILE_WIDTH;
             let y:number = row * TILE_HEIGHT;
+            let width:number = TILE_WIDTH;
+            let height:number = TILE_HEIGHT;
             let sprite:Phaser.GameObjects.Sprite = null;
             let tiletype:TileTypes = TileTypes.Empty;
 
@@ -46,9 +48,15 @@ class LevelLoader {
                 else if (levelJson['semisolidTiles'].indexOf(tileId) >= 0) {
                     tiletype = TileTypes.Semisolid;
                 }
+                else continue;
+
+                let hitboxData = levelJson['customHitboxes'][tileId.toString()];
+                if (hitboxData) {
+                    height = hitboxData['height'];
+                }
             }
 
-            tiles.push(new Tile(sprite, x, y, TILE_WIDTH, TILE_HEIGHT, row, col, tiletype));
+            tiles.push(new Tile(sprite, x, y, width, height, row, col, tiletype));
         }
         
         return new Tilemap(tiles, columns, rows);

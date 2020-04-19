@@ -206,7 +206,6 @@ var Animator = /** @class */ (function () {
             end: length - 1,
             zeroPad: 2
         });
-        console.log(frameNames);
         Scenes.Current.anims.create({
             key: key,
             frames: frameNames,
@@ -462,6 +461,8 @@ var LevelLoader = /** @class */ (function () {
             var row = Math.floor(i / columns);
             var x = col * TILE_WIDTH;
             var y = row * TILE_HEIGHT;
+            var width = TILE_WIDTH;
+            var height = TILE_HEIGHT;
             var sprite = null;
             var tiletype = TileTypes.Empty;
             if (tileId >= 0) {
@@ -473,8 +474,14 @@ var LevelLoader = /** @class */ (function () {
                 else if (levelJson['semisolidTiles'].indexOf(tileId) >= 0) {
                     tiletype = TileTypes.Semisolid;
                 }
+                else
+                    continue;
+                var hitboxData = levelJson['customHitboxes'][tileId.toString()];
+                if (hitboxData) {
+                    height = hitboxData['height'];
+                }
             }
-            tiles.push(new Tile(sprite, x, y, TILE_WIDTH, TILE_HEIGHT, row, col, tiletype));
+            tiles.push(new Tile(sprite, x, y, width, height, row, col, tiletype));
         }
         return new Tilemap(tiles, columns, rows);
     };
@@ -493,7 +500,8 @@ var Tile = /** @class */ (function () {
         this.column = col;
         this.row = row;
         this.type = type ? type : TileTypes.Empty;
-        this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFFFF00, alpha: 0.5 } });
+        this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xfa8900, alpha: 0.5 } });
+        //if (this.canStandOn) this.drawHitbox();
     }
     Object.defineProperty(Tile.prototype, "position", {
         get: function () { return new Phaser.Geom.Point(this.hitbox.x, this.hitbox.y); },
@@ -638,7 +646,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.onCollisionSolved = function (result) {
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
-        //this.drawHitbox();
+        this.drawHitbox();
     };
     Player.prototype.decelerate = function (deceleration) {
         if (Math.abs(this.speed.x) < deceleration) {
@@ -701,7 +709,7 @@ var PlayerStats;
     PlayerStats.FlyingMaxFallSpeed = PlayerStats.DefaultMaxFallSpeed * 0.5;
     PlayerStats.YellRadius = 18;
     PlayerStats.CrouchDeceleration = 12;
-    PlayerStats.CrouchHitboxHeight = 6;
+    PlayerStats.CrouchHitboxHeight = 8;
     PlayerStats.PanicRunSpeed = 60;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {

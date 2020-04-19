@@ -26,6 +26,7 @@ for filename in os.listdir(directory):
     tile_id = -1
     tiles_solid = []
     tiles_semisolid = []
+    custom_hitboxes = {}
     for line in tileset_content.splitlines():
         if 'tile id' in line:
             tile_id += 1
@@ -33,6 +34,11 @@ for filename in os.listdir(directory):
             tiles_solid.append(tile_id)
         elif '"tiletype"' in line and '"semisolid"' in line:
             tiles_semisolid.append(tile_id)
+        elif 'hitbox' in line:
+            custom_hitboxes[str(tile_id)] = {}
+            if '"hitbox_height"' in line:
+                custom_hitboxes[str(tile_id)]['height'] = int(line.split('value="',1)[1].replace('"/>', ''))
+            
     tileset_file.close()
     
     # Create the levels json
@@ -43,6 +49,7 @@ for filename in os.listdir(directory):
         'tileset': json_content['tilesets'][0]['source'].replace('../', '').replace('.tsx', ''),
         'solidTiles': tiles_solid,
         'semisolidTiles': tiles_semisolid,
+        'customHitboxes': custom_hitboxes,
     }
     json_ouput[filename.decode('utf-8').replace('.json', '')] = json_line
 

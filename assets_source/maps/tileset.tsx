@@ -243,32 +243,38 @@
  </tile>
  <tile id="48">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="10"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="49">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="10"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="50">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="10"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="51">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="10"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="52">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="10"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="53">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="10"/>
+   <property name="tiletype" value="solid"/>
   </properties>
  </tile>
  <tile id="54">
