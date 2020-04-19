@@ -21,7 +21,7 @@ class Player extends Actor
     public get bounceHitbox(): Phaser.Geom.Rectangle { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); };
     public get yellArea(): Phaser.Geom.Circle { 
         return new Phaser.Geom.Circle(
-            this.hitbox.centerX + (18 * this.animator.facingDirection), 
+            this.hitbox.centerX + (3 * this.animator.facingDirection), 
             this.hitbox.centerY, 
             PlayerStats.YellRadius
         ); 
@@ -115,7 +115,7 @@ class Player extends Actor
             this.changeState(this.winState);
         }
 
-        //this.drawHitbox();
+        this.drawHitbox();
     }
     
     public decelerate(deceleration: number) {
@@ -136,9 +136,10 @@ class Player extends Actor
     }
 
     public drawHitbox() {
-        this.hitboxGraphics.clear();
-        this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillRectShape(this.hitbox);
+        // this.hitboxGraphics.clear();
+        // this.hitboxGraphics.depth = 10;
+        // this.hitboxGraphics.fillRectShape(this.hitbox);
+        // this.hitboxGraphics.fillCircleShape(this.yellArea);
     }
 
     public destroy() {

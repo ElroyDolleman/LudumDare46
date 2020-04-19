@@ -24,7 +24,7 @@ var GameScene = /** @class */ (function (_super) {
     function GameScene() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.prevOnState = OnOffState.CurrentOnType;
-        _this.currentLevelNumber = 1;
+        _this.currentLevelNumber = 8;
         return _this;
     }
     Object.defineProperty(GameScene.prototype, "currentLevelName", {
@@ -101,7 +101,7 @@ var GameScene = /** @class */ (function (_super) {
         }
     };
     GameScene.prototype.nextLevel = function () {
-        if (this.currentLevelNumber >= 6) {
+        if (this.currentLevelNumber >= 8) {
             console.log("END OF GAME");
             return;
         }
@@ -984,8 +984,8 @@ var Player = /** @class */ (function (_super) {
         _this.createStates();
         _this.currentState = _this.idleState;
         _this.currentState.enter();
+        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
         return _this;
-        //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
     Object.defineProperty(Player.prototype, "bounceHitbox", {
         get: function () { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); },
@@ -995,7 +995,7 @@ var Player = /** @class */ (function (_super) {
     ;
     Object.defineProperty(Player.prototype, "yellArea", {
         get: function () {
-            return new Phaser.Geom.Circle(this.hitbox.centerX + (18 * this.animator.facingDirection), this.hitbox.centerY, PlayerStats.YellRadius);
+            return new Phaser.Geom.Circle(this.hitbox.centerX + (3 * this.animator.facingDirection), this.hitbox.centerY, PlayerStats.YellRadius);
         },
         enumerable: true,
         configurable: true
@@ -1093,7 +1093,7 @@ var Player = /** @class */ (function (_super) {
             this.winState.goalTile = this.goalTile;
             this.changeState(this.winState);
         }
-        //this.drawHitbox();
+        this.drawHitbox();
     };
     Player.prototype.decelerate = function (deceleration) {
         if (Math.abs(this.speed.x) < deceleration) {
@@ -1113,7 +1113,8 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.drawHitbox = function () {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
-        this.hitboxGraphics.fillRectShape(this.hitbox);
+        //this.hitboxGraphics.fillRectShape(this.hitbox);
+        this.hitboxGraphics.fillCircleShape(this.yellArea);
     };
     Player.prototype.destroy = function () {
         this.animator.destroy();
@@ -1170,7 +1171,7 @@ var PlayerStats;
     PlayerStats.FlyPower = 128;
     PlayerStats.FlyingGravity = PlayerStats.DefaultGravity * 0.5;
     PlayerStats.FlyingMaxFallSpeed = PlayerStats.DefaultMaxFallSpeed * 0.5;
-    PlayerStats.YellRadius = 18;
+    PlayerStats.YellRadius = 28;
     PlayerStats.CrouchDeceleration = 12;
     PlayerStats.CrouchHitboxHeight = 8;
     PlayerStats.PanicRunSpeed = 60;

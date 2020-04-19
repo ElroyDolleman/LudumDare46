@@ -13,7 +13,7 @@ module PlayerStats
     export const FlyingGravity = DefaultGravity * 0.5;
     export const FlyingMaxFallSpeed = DefaultMaxFallSpeed * 0.5;
 
-    export const YellRadius = 18;
+    export const YellRadius = 28;
 
     export const CrouchDeceleration = 12;
     export const CrouchHitboxHeight = 8;

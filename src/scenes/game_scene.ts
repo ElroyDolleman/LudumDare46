@@ -102,7 +102,7 @@ class GameScene extends Phaser.Scene {
     }
 
     nextLevel() {
-        if (this.currentLevelNumber >= 6) {
+        if (this.currentLevelNumber >= 8) {
             console.log("END OF GAME");
             return;
         }
