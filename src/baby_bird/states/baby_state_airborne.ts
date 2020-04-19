@@ -24,6 +24,7 @@ class BabyAirborneState extends BabyBaseState
                 this.baby.animator.squish(1.5, 0.5, 220);
             }
             else {
+                this.baby.animator.squish(1.1, 0.8, 200);
                 this.baby.speed.y = 0;
                 this.baby.changeState(this.baby.walkState);
             }
