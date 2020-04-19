@@ -12,8 +12,10 @@ class Baby extends Actor
     public waitState: BabyWaitState;
     public airState: BabyAirborneState;
     public deadState: BabyDeadState;
+    public safeState: BabySafeState;
 
     public get isDead(): boolean { return this.currentState == this.deadState; };
+    public get isSafe(): boolean { return this.currentState == this.safeState; };
 
     constructor(mommy: Player) {
         super(new Phaser.Geom.Rectangle(16, 283, 5, 5));
@@ -36,6 +38,7 @@ class Baby extends Actor
         this.waitState = new BabyWaitState(this);
         this.airState = new BabyAirborneState(this);
         this.deadState = new BabyDeadState(this);
+        this.safeState = new BabySafeState(this);
     }
 
     public update() {
@@ -67,11 +70,18 @@ class Baby extends Actor
 
     public onCollisionSolved(result: CollisionResult) {
         if (result.isCrushed || result.isDamaged) {
+            this.x = result.prevLeft;
+            this.y = result.prevTop;
             this.disappearDie();
             return;
         }
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
+
+        if (this.isTouchingGoal && !this.isSafe) {
+            this.safeState.goalTile = this.goalTile;
+            this.changeState(this.safeState);
+        }
 
         //this.drawHitbox();
     }

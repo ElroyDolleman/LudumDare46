@@ -11,6 +11,7 @@ class Player extends Actor
     public crouchState: CrouchState;
     public panicState: PanicState;
     public deadState: DeadState;
+    public winState: WinState;
 
     public baby: Baby;
     public animator: PlayerAnimator;
@@ -28,6 +29,8 @@ class Player extends Actor
 
     public get isCrouching(): boolean { return this.currentState == this.crouchState; };
     public get isDead(): boolean { return this.currentState == this.deadState; };
+    public get lost(): boolean { return this.isDead || this.currentState == this.panicState; }
+    public get hasWon(): boolean { return this.currentState == this.winState; }
     public get isFlying(): boolean { return this.currentState == this.flyState; };
     public get isInGroundedState(): boolean { return this.currentState.isGrouned; };
 
@@ -57,13 +60,14 @@ class Player extends Actor
         this.crouchState = new CrouchState(this);
         this.panicState = new PanicState(this);
         this.deadState = new DeadState(this);
+        this.winState = new WinState(this);
     }
 
     public update() {
         this.currentState.update();
         this.animator.update();
 
-        if (this.baby.isDead && this.currentState != this.panicState) {
+        if (this.baby.isDead && !this.lost) {
             this.changeState(this.panicState);
         }
         if (this.poofEffect.sprite.visible && !this.poofEffect.sprite.anims.isPlaying) {
@@ -105,6 +109,11 @@ class Player extends Actor
         }
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
+
+        if (this.isTouchingGoal && this.baby.isSafe && !this.lost && !this.hasWon) {
+            this.winState.goalTile = this.goalTile;
+            this.changeState(this.winState);
+        }
 
         //this.drawHitbox();
     }

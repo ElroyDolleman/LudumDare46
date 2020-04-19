@@ -289,12 +289,16 @@
  </tile>
  <tile id="56">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="8"/>
+   <property name="hitbox_y" type="int" value="8"/>
+   <property name="tiletype" value="goal"/>
   </properties>
  </tile>
  <tile id="57">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="hitbox_height" type="int" value="8"/>
+   <property name="hitbox_y" type="int" value="8"/>
+   <property name="tiletype" value="goal"/>
   </properties>
  </tile>
  <tile id="58">

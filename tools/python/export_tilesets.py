@@ -27,6 +27,7 @@ for filename in os.listdir(directory):
     tiles_solid = []
     tiles_semisolid = []
     tiles_spikes = []
+    tiles_goal = []
     tiles_onoff = {'switch_a':[], 'block_a':[], 'switch_b':[], 'block_b':[]}
     custom_hitboxes = {}
     for line in tileset_content.splitlines():
@@ -38,8 +39,13 @@ for filename in os.listdir(directory):
             tiles_semisolid.append(tile_id)
         elif '"tiletype"' in line and '"spikes"' in line:
             tiles_spikes.append(tile_id)
+        elif '"tiletype"' in line and '"goal"' in line:
+            tiles_goal.append(tile_id)
         elif 'hitbox' in line:
-            custom_hitboxes[str(tile_id)] = {}
+            if not str(tile_id) in custom_hitboxes:
+                custom_hitboxes[str(tile_id)] = {}
+            if '"hitbox_y"' in line:
+                custom_hitboxes[str(tile_id)]['y'] = int(line.split('value="', 1)[1].replace('"/>', ''))
             if '"hitbox_height"' in line:
                 custom_hitboxes[str(tile_id)]['height'] = int(line.split('value="', 1)[1].replace('"/>', ''))
         elif 'onoff_' in line:
@@ -56,9 +62,10 @@ for filename in os.listdir(directory):
         'tileset': json_content['tilesets'][0]['source'].replace('../', '').replace('.tsx', ''),
         'solidTiles': tiles_solid,
         'semisolidTiles': tiles_semisolid,
-        'customHitboxes': custom_hitboxes,
         'onoff': tiles_onoff,
-        'spikes': tiles_spikes
+        'spikes': tiles_spikes,
+        'goal': tiles_goal,
+        'customHitboxes': custom_hitboxes,
     }
     json_ouput[filename.decode('utf-8').replace('.json', '')] = json_line
 

@@ -5,11 +5,12 @@ module PlayerAnimations
     export let Jump = { key: 'playerbird_jump_00.png', isSingleFrame: true };
     export let Fall = { key: 'playerbird_fall_00.png', isSingleFrame: true };
     export let Crouch = { key: 'playerbird_crouch_00.png', isSingleFrame: true };
-
+    
     export let Run = { key: 'run', isSingleFrame: false };
     export let Fly = { key: 'fly', isSingleFrame: false };
     export let Yell = { key: 'yell', isSingleFrame: false };
     export let Panic = { key: 'panic', isSingleFrame: false };
+    export let Celebrate = { key: 'celebrate', isSingleFrame: false };
 }
 
 class PlayerAnimator extends Animator
@@ -21,8 +22,9 @@ class PlayerAnimator extends Animator
 
         this.createAnimation('run', 'player', 'playerbird_walk_', 3);
         this.createAnimation('fly', 'player', 'playerbird_fly_', 3);
-        this.createAnimation('yell', 'player', 'playerbird_yell_', 3, 12, 1);
+        this.createAnimation('yell', 'player', 'playerbird_yell_', 4, 12, 1);
         this.createAnimation('panic', 'player', 'playerbird_shocked_', 3, 20);
+        this.createAnimation('celebrate', 'player', 'playerbird_celebrate_', 4, 8);
     }
 
     public update() {

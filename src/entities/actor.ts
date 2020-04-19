@@ -10,6 +10,8 @@ class Actor
     public get position(): Phaser.Math.Vector2 { return new Phaser.Math.Vector2(this.x, this.y); }
 
     public canTriggerOnOffSwitch: boolean = false;
+    public isTouchingGoal: boolean = false;
+    public goalTile: Tile;
     public currentSwitch: Tile;
 
     constructor(hitbox: Phaser.Geom.Rectangle) {

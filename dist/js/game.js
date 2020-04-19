@@ -31,9 +31,13 @@ var PlaygroundScene = /** @class */ (function (_super) {
         Scenes.Current = this;
         this.inputManager = new InputManager(this);
         this.level = this.levelLoader.load('playground01');
+        CurrentLevel = this.level;
         this.player = new Player();
         this.baby = new Baby(this.player);
         this.player.baby = this.baby;
+        this.player.x = this.level.goalPos.x - this.player.hitbox.width / 2;
+        this.player.y = this.level.goalPos.y - this.player.hitbox.height;
+        this.player.animator.facingDirection = MathHelper.sign(this.baby.x - this.player.x);
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
     };
@@ -48,6 +52,8 @@ var PlaygroundScene = /** @class */ (function (_super) {
         }
         if (this.baby.isDead) {
             this.level.removeCollidableActor(this.baby);
+        }
+        else if (this.baby.isSafe) {
         }
         OnOffState.StateJustChanged = this.prevOnState != OnOffState.CurrentOnType;
     };
@@ -70,6 +76,7 @@ var game = new Phaser.Game(config);
 var Actor = /** @class */ (function () {
     function Actor(hitbox) {
         this.canTriggerOnOffSwitch = false;
+        this.isTouchingGoal = false;
         this.speed = new Phaser.Math.Vector2();
         this.hitbox = hitbox;
     }
@@ -130,11 +137,18 @@ var Baby = /** @class */ (function (_super) {
         configurable: true
     });
     ;
+    Object.defineProperty(Baby.prototype, "isSafe", {
+        get: function () { return this.currentState == this.safeState; },
+        enumerable: true,
+        configurable: true
+    });
+    ;
     Baby.prototype.createStates = function () {
         this.walkState = new BabyWalkState(this);
         this.waitState = new BabyWaitState(this);
         this.airState = new BabyAirborneState(this);
         this.deadState = new BabyDeadState(this);
+        this.safeState = new BabySafeState(this);
     };
     Baby.prototype.update = function () {
         this.currentState.update();
@@ -163,11 +177,17 @@ var Baby = /** @class */ (function (_super) {
     };
     Baby.prototype.onCollisionSolved = function (result) {
         if (result.isCrushed || result.isDamaged) {
+            this.x = result.prevLeft;
+            this.y = result.prevTop;
             this.disappearDie();
             return;
         }
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
+        if (this.isTouchingGoal && !this.isSafe) {
+            this.safeState.goalTile = this.goalTile;
+            this.changeState(this.safeState);
+        }
         //this.drawHitbox();
     };
     Baby.prototype.drawHitbox = function () {
@@ -306,6 +326,7 @@ var BabyStats;
     BabyStats.DefaultWaitingTime = 1000;
     BabyStats.MommyBouncePower = 168;
     BabyStats.DeadFallSpeed = 300;
+    BabyStats.JumpInGoalPower = 96;
 })(BabyStats || (BabyStats = {}));
 var BabyBaseState = /** @class */ (function () {
     function BabyBaseState(baby) {
@@ -415,6 +436,40 @@ var BabyDeadState = /** @class */ (function (_super) {
     };
     return BabyDeadState;
 }(BabyGroundedState));
+var BabySafeState = /** @class */ (function (_super) {
+    __extends(BabySafeState, _super);
+    function BabySafeState(baby) {
+        return _super.call(this, baby) || this;
+    }
+    BabySafeState.prototype.enter = function () {
+        this.baby.speed.x = 0;
+        this.baby.animator.changeAnimation('babybird_walk_00.png', true);
+    };
+    BabySafeState.prototype.update = function () {
+        if (this.goalTile.hitbox.top < this.baby.hitbox.bottom) {
+            this.baby.speed.y = -BabyStats.JumpInGoalPower;
+        }
+        else if (this.goalTile.hitbox.top > this.baby.hitbox.bottom) {
+            this.baby.speed.y += BabyStats.DefaultGravity;
+        }
+        else if (this.baby.speed.y > 0) {
+            this.baby.speed.y = 0;
+        }
+        if (Phaser.Math.Difference(this.baby.hitbox.centerX, CurrentLevel.goalPos.x) <= BabyStats.DefaultWalkSpeed * GameTime.getElapsed()) {
+            this.baby.hitbox.centerX = CurrentLevel.goalPos.x;
+            this.baby.speed.x = 0;
+        }
+        else if (this.baby.hitbox.centerX < CurrentLevel.goalPos.x) {
+            this.baby.speed.x = BabyStats.DefaultWalkSpeed;
+        }
+        else if (this.baby.hitbox.centerX > CurrentLevel.goalPos.x) {
+            this.baby.speed.x = -BabyStats.DefaultWalkSpeed;
+        }
+    };
+    BabySafeState.prototype.onCollisionSolved = function (result) {
+    };
+    return BabySafeState;
+}(BabyGroundedState));
 var BabyWaitState = /** @class */ (function (_super) {
     __extends(BabyWaitState, _super);
     function BabyWaitState(baby) {
@@ -469,10 +524,19 @@ var BabyWalkState = /** @class */ (function (_super) {
     return BabyWalkState;
 }(BabyGroundedState));
 var Level = /** @class */ (function () {
-    function Level(map) {
+    function Level(map, goalPieces) {
+        var _this = this;
         this.collisionManager = new CollisionManager(this);
         this.collidableActors = [];
         this.map = map;
+        this.goalPieces = [];
+        goalPieces.forEach(function (pos) {
+            _this.goalPieces.push(_this.map.getTile(pos.x, pos.y));
+        });
+        var left = Math.min(this.goalPieces[0].hitbox.left, this.goalPieces[1].hitbox.left);
+        var right = Math.max(this.goalPieces[0].hitbox.right, this.goalPieces[1].hitbox.right);
+        var diff = right - left;
+        this.goalPos = new Phaser.Math.Vector2(right - diff / 2, this.goalPieces[0].hitbox.top);
     }
     Level.prototype.update = function () {
     };
@@ -480,6 +544,17 @@ var Level = /** @class */ (function () {
         var _this = this;
         this.collidableActors.forEach(function (actor) {
             var result = _this.collisionManager.moveActor(actor);
+            _this.goalPieces.every(function (tile) {
+                if (Phaser.Geom.Rectangle.Overlaps(actor.hitbox, tile.hitbox) || actor.hitbox.bottom == tile.hitbox.top) {
+                    actor.isTouchingGoal = true;
+                    actor.goalTile = tile;
+                    return false;
+                }
+                else {
+                    actor.isTouchingGoal = false;
+                    actor.goalTile = null;
+                }
+            });
             // this.map.clearHitboxDrawings();
             // for (let i = 0; i < result.tiles.length; i++) {
             //     result.tiles[i].drawHitbox()
@@ -505,9 +580,10 @@ var LevelLoader = /** @class */ (function () {
         this.scene.load.json('levels', 'assets/levels.json');
     };
     LevelLoader.prototype.load = function (name) {
+        this.goalPieces = [];
         var levelJson = this.scene.cache.json.get('levels')[name];
         var map = this.createTilemap(levelJson);
-        return new Level(map);
+        return new Level(map, this.goalPieces);
     };
     LevelLoader.prototype.createTilemap = function (levelJson) {
         var tilesetName = levelJson['tileset'];
@@ -536,9 +612,15 @@ var LevelLoader = /** @class */ (function () {
                 sprite.setRotation(rotation);
                 tiletype = this.getTileType(levelJson, tileId);
                 if (tiletype != TileTypes.Empty) {
+                    if (tiletype == TileTypes.Goal) {
+                        this.goalPieces.push(new Phaser.Geom.Point(col, row));
+                    }
                     var hitboxData = levelJson['customHitboxes'][tileId.toString()];
                     if (hitboxData) {
-                        height = hitboxData['height'];
+                        if (hitboxData['height'])
+                            height = hitboxData['height'];
+                        if (hitboxData['y'])
+                            y += hitboxData['y'];
                     }
                 }
             }
@@ -554,6 +636,8 @@ var LevelLoader = /** @class */ (function () {
                 return TileTypes.Semisolid;
             case levelJson['spikes'].indexOf(tileId) >= 0:
                 return TileTypes.Spikes;
+            case levelJson['goal'].indexOf(tileId) >= 0:
+                return TileTypes.Goal;
             case levelJson['onoff']['switch_a'].indexOf(tileId) >= 0:
             case levelJson['onoff']['switch_b'].indexOf(tileId) >= 0:
                 return TileTypes.OnOffSwitch;
@@ -592,6 +676,7 @@ var TileTypes;
     TileTypes[TileTypes["OnOffBlockA"] = 4] = "OnOffBlockA";
     TileTypes[TileTypes["OnOffBlockB"] = 5] = "OnOffBlockB";
     TileTypes[TileTypes["Spikes"] = 6] = "Spikes";
+    TileTypes[TileTypes["Goal"] = 7] = "Goal";
 })(TileTypes || (TileTypes = {}));
 var Tile = /** @class */ (function () {
     function Tile(sprite, x, y, width, height, col, row, type) {
@@ -605,8 +690,8 @@ var Tile = /** @class */ (function () {
             this.setupSpikeHitbox(width, height);
         }
         // this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xfa8900, alpha: 0.5 } });
-        // if (this.canStandOn || this.canDamage) {
-        //     this.drawHitbox();
+        // if (this.isSemisolid || this.canDamage) {
+        //      this.drawHitbox();
         // }
         if (this.isEffectedByOnOffState) {
             OnOffState.StateEvents.addListener('switched', this.onOnOffStateChanged, this);
@@ -628,7 +713,7 @@ var Tile = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(Tile.prototype, "isSemisolid", {
-        get: function () { return this.type == TileTypes.Semisolid; },
+        get: function () { return this.type == TileTypes.Semisolid || this.type == TileTypes.Goal; },
         enumerable: true,
         configurable: true
     });
@@ -821,6 +906,16 @@ var Player = /** @class */ (function (_super) {
         configurable: true
     });
     ;
+    Object.defineProperty(Player.prototype, "lost", {
+        get: function () { return this.isDead || this.currentState == this.panicState; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Player.prototype, "hasWon", {
+        get: function () { return this.currentState == this.winState; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Player.prototype, "isFlying", {
         get: function () { return this.currentState == this.flyState; },
         enumerable: true,
@@ -843,11 +938,12 @@ var Player = /** @class */ (function (_super) {
         this.crouchState = new CrouchState(this);
         this.panicState = new PanicState(this);
         this.deadState = new DeadState(this);
+        this.winState = new WinState(this);
     };
     Player.prototype.update = function () {
         this.currentState.update();
         this.animator.update();
-        if (this.baby.isDead && this.currentState != this.panicState) {
+        if (this.baby.isDead && !this.lost) {
             this.changeState(this.panicState);
         }
         if (this.poofEffect.sprite.visible && !this.poofEffect.sprite.anims.isPlaying) {
@@ -886,6 +982,10 @@ var Player = /** @class */ (function (_super) {
         }
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
+        if (this.isTouchingGoal && this.baby.isSafe && !this.lost && !this.hasWon) {
+            this.winState.goalTile = this.goalTile;
+            this.changeState(this.winState);
+        }
         //this.drawHitbox();
     };
     Player.prototype.decelerate = function (deceleration) {
@@ -922,6 +1022,7 @@ var PlayerAnimations;
     PlayerAnimations.Fly = { key: 'fly', isSingleFrame: false };
     PlayerAnimations.Yell = { key: 'yell', isSingleFrame: false };
     PlayerAnimations.Panic = { key: 'panic', isSingleFrame: false };
+    PlayerAnimations.Celebrate = { key: 'celebrate', isSingleFrame: false };
 })(PlayerAnimations || (PlayerAnimations = {}));
 var PlayerAnimator = /** @class */ (function (_super) {
     __extends(PlayerAnimator, _super);
@@ -931,8 +1032,9 @@ var PlayerAnimator = /** @class */ (function (_super) {
         _this.updatePosition();
         _this.createAnimation('run', 'player', 'playerbird_walk_', 3);
         _this.createAnimation('fly', 'player', 'playerbird_fly_', 3);
-        _this.createAnimation('yell', 'player', 'playerbird_yell_', 3, 12, 1);
+        _this.createAnimation('yell', 'player', 'playerbird_yell_', 4, 12, 1);
         _this.createAnimation('panic', 'player', 'playerbird_shocked_', 3, 20);
+        _this.createAnimation('celebrate', 'player', 'playerbird_celebrate_', 4, 8);
         return _this;
     }
     PlayerAnimator.prototype.update = function () {
@@ -961,6 +1063,7 @@ var PlayerStats;
     PlayerStats.CrouchDeceleration = 12;
     PlayerStats.CrouchHitboxHeight = 8;
     PlayerStats.PanicRunSpeed = 60;
+    PlayerStats.JumpInGoalPower = 96;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
@@ -1306,6 +1409,48 @@ var RunState = /** @class */ (function (_super) {
     };
     return RunState;
 }(GroundedState));
+var WinState = /** @class */ (function (_super) {
+    __extends(WinState, _super);
+    function WinState(player) {
+        return _super.call(this, player) || this;
+    }
+    WinState.prototype.enter = function () {
+        this.player.animator.changeAnimation(PlayerAnimations.Idle);
+        this.player.speed.x = 0;
+        this.done = false;
+    };
+    WinState.prototype.update = function () {
+        if (this.done) {
+            return;
+        }
+        if (this.goalTile.hitbox.top < this.player.hitbox.bottom) {
+            this.player.speed.y = -PlayerStats.JumpInGoalPower;
+        }
+        else if (this.goalTile.hitbox.top > this.player.hitbox.bottom) {
+            this.player.speed.y += PlayerStats.DefaultGravity;
+        }
+        else if (this.player.speed.y > 0) {
+            this.player.speed.y = 0;
+        }
+        if (Phaser.Math.Difference(this.player.hitbox.centerX, CurrentLevel.goalPos.x) <= PlayerStats.DefaultRunSpeed * GameTime.getElapsed()) {
+            this.player.hitbox.centerX = CurrentLevel.goalPos.x;
+            this.player.speed.x = 0;
+        }
+        else if (this.player.hitbox.centerX < CurrentLevel.goalPos.x) {
+            this.player.speed.x = PlayerStats.DefaultRunSpeed;
+        }
+        else if (this.player.hitbox.centerX > CurrentLevel.goalPos.x) {
+            this.player.speed.x = -PlayerStats.DefaultRunSpeed;
+        }
+        if (!this.done && this.player.hitbox.centerX == CurrentLevel.goalPos.x && this.goalTile.hitbox.top == this.player.hitbox.bottom) {
+            this.player.animator.changeAnimation(PlayerAnimations.Celebrate);
+            this.done = true;
+        }
+    };
+    WinState.prototype.onCollisionSolved = function (result) {
+    };
+    return WinState;
+}(GroundedState));
 var YellState = /** @class */ (function (_super) {
     __extends(YellState, _super);
     function YellState(player) {
@@ -1494,6 +1639,7 @@ var GameTime;
 })(GameTime || (GameTime = {}));
 var TILE_WIDTH = 16;
 var TILE_HEIGHT = 16;
+var CurrentLevel;
 var Scenes;
 (function (Scenes) {
 })(Scenes || (Scenes = {}));

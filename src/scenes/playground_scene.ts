@@ -1,11 +1,11 @@
 class PlaygroundScene extends Phaser.Scene {
 
-    player: Player;
-    baby: Baby;
-    levelLoader: LevelLoader;
-    level: Level;
-    inputManager: InputManager;
-    prevOnState = OnOffState.CurrentOnType;
+    public player: Player;
+    public baby: Baby;
+    public levelLoader: LevelLoader;
+    public level: Level;
+    public inputManager: InputManager;
+    public prevOnState = OnOffState.CurrentOnType;
 
     init() {
         this.levelLoader = new LevelLoader(this);
@@ -23,10 +23,14 @@ class PlaygroundScene extends Phaser.Scene {
 
         this.inputManager = new InputManager(this);
         this.level = this.levelLoader.load('playground01');
+        CurrentLevel = this.level;
 
         this.player = new Player();
         this.baby = new Baby(this.player);
         this.player.baby = this.baby;
+        this.player.x = this.level.goalPos.x - this.player.hitbox.width / 2;
+        this.player.y = this.level.goalPos.y - this.player.hitbox.height;
+        this.player.animator.facingDirection = MathHelper.sign(this.baby.x - this.player.x);
 
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
@@ -46,6 +50,9 @@ class PlaygroundScene extends Phaser.Scene {
         }
         if (this.baby.isDead) {
             this.level.removeCollidableActor(this.baby);
+        }
+        else if (this.baby.isSafe) {
+            
         }
 
         OnOffState.StateJustChanged = this.prevOnState != OnOffState.CurrentOnType;

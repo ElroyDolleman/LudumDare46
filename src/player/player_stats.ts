@@ -19,4 +19,5 @@ module PlayerStats
     export const CrouchHitboxHeight = 8;
 
     export const PanicRunSpeed = 60;
+    export const JumpInGoalPower = 96;
 }

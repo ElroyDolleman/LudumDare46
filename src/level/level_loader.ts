@@ -6,6 +6,8 @@ class LevelLoader {
 
     public readonly scene: Phaser.Scene;
 
+    private goalPieces: Phaser.Geom.Point[];
+
     constructor(scene:Phaser.Scene) { 
         this.scene = scene;
     }
@@ -15,10 +17,11 @@ class LevelLoader {
     }
 
     public load(name:string):Level {
+        this.goalPieces = [];
         let levelJson = this.scene.cache.json.get('levels')[name];
         let map = this.createTilemap(levelJson);
 
-        return new Level(map);
+        return new Level(map, this.goalPieces);
     }
 
     private createTilemap(levelJson: any):Tilemap {
@@ -56,9 +59,14 @@ class LevelLoader {
                 tiletype = this.getTileType(levelJson, tileId);
 
                 if (tiletype != TileTypes.Empty) {
+                    if (tiletype == TileTypes.Goal) {
+                        this.goalPieces.push(new Phaser.Geom.Point(col, row));
+                    }
+
                     let hitboxData = levelJson['customHitboxes'][tileId.toString()];
                     if (hitboxData) {
-                        height = hitboxData['height'];
+                        if (hitboxData['height']) height = hitboxData['height'];
+                        if (hitboxData['y']) y += hitboxData['y'];
                     }
                 }
             }
@@ -79,6 +87,9 @@ class LevelLoader {
 
             case levelJson['spikes'].indexOf(tileId) >= 0:
                 return TileTypes.Spikes;
+
+            case levelJson['goal'].indexOf(tileId) >= 0:
+                return TileTypes.Goal;
 
             case levelJson['onoff']['switch_a'].indexOf(tileId) >= 0:
             case levelJson['onoff']['switch_b'].indexOf(tileId) >= 0:

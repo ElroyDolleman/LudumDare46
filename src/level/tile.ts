@@ -5,7 +5,8 @@ enum TileTypes {
     OnOffSwitch,
     OnOffBlockA,
     OnOffBlockB,
-    Spikes
+    Spikes,
+    Goal
 }
 
 class Tile {
@@ -25,7 +26,7 @@ class Tile {
     
     public get isEmpty():boolean { return this.type == TileTypes.Empty; }
     public get isSolid():boolean { return this.type == TileTypes.Solid || this.type == OnOffState.CurrentOnType; }
-    public get isSemisolid():boolean { return this.type == TileTypes.Semisolid; }
+    public get isSemisolid():boolean { return this.type == TileTypes.Semisolid || this.type == TileTypes.Goal; }
     public get canStandOn():boolean { return this.isSolid || this.isSemisolid; }
     public get canDamage():boolean { return this.type == TileTypes.Spikes; }
 
@@ -45,8 +46,8 @@ class Tile {
         }
 
         // this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xfa8900, alpha: 0.5 } });
-        // if (this.canStandOn || this.canDamage) {
-        //     this.drawHitbox();
+        // if (this.isSemisolid || this.canDamage) {
+        //      this.drawHitbox();
         // }
 
         if (this.isEffectedByOnOffState) {
