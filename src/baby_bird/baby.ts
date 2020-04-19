@@ -24,7 +24,7 @@ class Baby extends Actor
 
         this.animator = new BabyAnimator(this);
         this.poofEffect = new Animator(Scenes.Current.add.sprite(0, 0, 'effects', 'poof_00.png'), this);
-        this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 20, 0);
+        this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 24, 0);
         this.poofEffect.sprite.setVisible(false);
 
         this.createStates();

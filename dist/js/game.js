@@ -996,7 +996,7 @@ var Player = /** @class */ (function (_super) {
         _this.canTriggerOnOffSwitch = true;
         _this.animator = new PlayerAnimator(_this);
         _this.poofEffect = new Animator(Scenes.Current.add.sprite(0, 0, 'effects', 'poof_00.png'), _this);
-        _this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 20, 0);
+        _this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 24, 0);
         _this.poofEffect.sprite.setVisible(false);
         _this.createStates();
         _this.currentState = _this.idleState;
