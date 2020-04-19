@@ -20,6 +20,7 @@ class Tile {
 
     public get position():Phaser.Geom.Point { return new Phaser.Geom.Point(this.hitbox.x, this.hitbox.y) }
     
+    public get isEmpty():boolean { return this.type == TileTypes.Empty; }
     public get isSolid():boolean { return this.type == TileTypes.Solid || this.type == OnOffState.CurrentOnType; }
     public get isSemisolid():boolean { return this.type == TileTypes.Semisolid; }
     public get canStandOn():boolean { return this.isSolid || this.isSemisolid; }

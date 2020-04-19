@@ -29,90 +29,86 @@ class CollisionManager
         result.prevRight = actor.hitbox.right;
         result.prevBottom = actor.hitbox.bottom;
         
-        if (actor.speed.x != 0) {
-            actor.moveHorizontal();
-            for (let i = 0; i < tiles.length; i++) {
-                if (!Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
-                    continue;
+        actor.moveHorizontal();
+        for (let i = 0; i < tiles.length; i++) {
+            if (tiles[i].isEmpty || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                continue;
+            }
+            if (!tiles[i].isSolid) {
+                if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                    tiles[i].triggerSwitch(actor);
                 }
-                if (!tiles[i].isSolid) {
-                    if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
-                        tiles[i].triggerSwitch(actor);
-                    }
-                    continue;
-                }
-                if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
-                    if (actor.hitbox.left < tiles[i].hitbox.left && !this.currentLevel.map.getTileNextTo(tiles[i], -1, 0).isSolid) {
-                        result.onRight = true;
-                        actor.hitbox.x = tiles[i].hitbox.x - actor.hitbox.width;
-                        continue;
-                    }
-                    else if (actor.hitbox.right > tiles[i].hitbox.right && !this.currentLevel.map.getTileNextTo(tiles[i], 1, 0).isSolid) {
-                        result.onLeft = true;
-                        actor.hitbox.x = tiles[i].hitbox.right;
-                        continue;
-                    }
-                    else {
-                        result.isCrushed = true;
-                        continue;
-                    }
-                }
-
-                if (actor.speed.x > 0) {
+                continue;
+            }
+            if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
+                if (actor.hitbox.left < tiles[i].hitbox.left && !this.currentLevel.map.getTileNextTo(tiles[i], -1, 0).isSolid) {
                     result.onRight = true;
                     actor.hitbox.x = tiles[i].hitbox.x - actor.hitbox.width;
+                    continue;
                 }
-                else {
+                else if (actor.hitbox.right > tiles[i].hitbox.right && !this.currentLevel.map.getTileNextTo(tiles[i], 1, 0).isSolid) {
                     result.onLeft = true;
                     actor.hitbox.x = tiles[i].hitbox.right;
+                    continue;
                 }
+                else {
+                    result.isCrushed = true;
+                    continue;
+                }
+            }
+
+            if (actor.speed.x > 0) {
+                result.onRight = true;
+                actor.hitbox.x = tiles[i].hitbox.x - actor.hitbox.width;
+            }
+            else if (actor.speed.x < 0) {
+                result.onLeft = true;
+                actor.hitbox.x = tiles[i].hitbox.right;
             }
         }
 
-        if (actor.speed.y != 0) {
-            actor.moveVertical();
-            for (let i = 0; i < tiles.length; i++) {
-                if (!Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
-                    continue;
+        actor.moveVertical();
+        for (let i = 0; i < tiles.length; i++) {
+            if (tiles[i].isEmpty || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
+                continue;
+            }
+            if (!tiles[i].canStandOn) {
+                if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                    tiles[i].triggerSwitch(actor);
                 }
-                if (!tiles[i].canStandOn) {
-                    if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
-                        tiles[i].triggerSwitch(actor);
-                    }
-                    continue;
-                }
-                if (tiles[i].isSemisolid) {
-                    if (this.isFallingThroughSemisolid(tiles[i], result.prevBottom, actor.hitbox.bottom)) {
-                        result.onBottom = true;
-                        actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
-                    }
-                    continue;
-                }
-                if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
-                    if (actor.hitbox.top < tiles[i].hitbox.top && !this.currentLevel.map.getTileNextTo(tiles[i], 0, -1).isSolid) {
-                        result.onBottom = true;
-                        actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
-                        continue;
-                    }
-                    else if (actor.hitbox.bottom > tiles[i].hitbox.bottom && !this.currentLevel.map.getTileNextTo(tiles[i], 0, 1).isSolid) {
-                        result.onTop = true;
-                        actor.hitbox.y = tiles[i].hitbox.bottom;
-                        continue;
-                    }
-                    else {
-                        result.isCrushed = true;
-                        continue;
-                    }
-                }
-
-                if (actor.speed.y > 0) {
+                continue;
+            }
+            if (tiles[i].isSemisolid) {
+                if (this.isFallingThroughSemisolid(tiles[i], result.prevBottom, actor.hitbox.bottom)) {
                     result.onBottom = true;
                     actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
                 }
-                else {
+                continue;
+            }
+            if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
+                if (actor.hitbox.top < tiles[i].hitbox.top && !this.currentLevel.map.getTileNextTo(tiles[i], 0, -1).isSolid) {
+                    result.onBottom = true;
+                    actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
+                    continue;
+                }
+                else if (actor.hitbox.bottom > tiles[i].hitbox.bottom && !this.currentLevel.map.getTileNextTo(tiles[i], 0, 1).isSolid) {
                     result.onTop = true;
                     actor.hitbox.y = tiles[i].hitbox.bottom;
+                    continue;
                 }
+                else {
+                    result.isCrushed = true;
+                    continue;
+                }
+            }
+
+            if (actor.speed.y > 0) {
+                result.onBottom = true;
+                actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
+            }
+            else if (actor.speed.y < 0) {
+                result.onTop = true;
+                actor.hitbox.y = tiles[i].hitbox.bottom;
             }
         }
         

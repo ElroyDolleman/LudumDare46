@@ -5,6 +5,7 @@ class PlaygroundScene extends Phaser.Scene {
     levelLoader: LevelLoader;
     level: Level;
     inputManager: InputManager;
+    prevOnState = OnOffState.CurrentOnType;
 
     init() {
         this.levelLoader = new LevelLoader(this);
@@ -32,11 +33,21 @@ class PlaygroundScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number) {
+        this.prevOnState = OnOffState.CurrentOnType;
         this.inputManager.update();
 
         this.player.update();
         this.baby.update();
 
         this.level.updateCollision();
+
+        if (this.player.isDead) {
+            this.level.removeCollidableActor(this.player);
+        }
+        if (this.baby.isDead) {
+            this.level.removeCollidableActor(this.baby);
+        }
+
+        OnOffState.StateJustChanged = this.prevOnState != OnOffState.CurrentOnType;
     }
 }

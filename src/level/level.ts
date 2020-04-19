@@ -24,4 +24,10 @@ class Level
             // }
         });
     }
+
+    public removeCollidableActor(actor: Actor) {
+        let index = this.collidableActors.indexOf(actor);
+        if (index < 0) return;
+        this.collidableActors.splice(index, 1);
+    }
 }

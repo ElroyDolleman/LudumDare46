@@ -13,7 +13,7 @@ class Baby extends Actor
     public airState: BabyAirborneState;
     public deadState: BabyDeadState;
 
-    public get isDead(): boolean { return this.currentState == this.deadState; }
+    public get isDead(): boolean { return this.currentState == this.deadState; };
 
     constructor(mommy: Player) {
         super(new Phaser.Geom.Rectangle(16, 283, 5, 5));
@@ -45,6 +45,7 @@ class Baby extends Actor
         if (this.poofEffect.sprite.visible && !this.poofEffect.sprite.anims.isPlaying) {
             this.poofEffect.sprite.setVisible(false);
         }
+        super.update();
     }
 
     public changeState(newState: BabyBaseState) {

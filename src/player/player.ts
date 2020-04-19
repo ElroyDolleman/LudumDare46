@@ -10,9 +10,11 @@ class Player extends Actor
     public yellState: YellState;
     public crouchState: CrouchState;
     public panicState: PanicState;
+    public deadState: DeadState;
 
     public baby: Baby;
     public animator: PlayerAnimator;
+    public poofEffect: Animator;
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
     public get bounceHitbox(): Phaser.Geom.Rectangle { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); };
@@ -25,12 +27,16 @@ class Player extends Actor
     };
 
     public get isCrouching(): boolean { return this.currentState == this.crouchState; };
+    public get isDead(): boolean { return this.currentState == this.deadState; };
 
     constructor() {
         super(new Phaser.Geom.Rectangle(16, 262, 10, 10));
         this.canTriggerOnOffSwitch = true;
 
         this.animator = new PlayerAnimator(this);
+        this.poofEffect = new Animator(Scenes.Current.add.sprite(0, 0, 'effects', 'poof_00.png'), this);
+        this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 20, 0);
+        this.poofEffect.sprite.setVisible(false);
 
         this.createStates();
         this.currentState = this.idleState;
@@ -48,6 +54,7 @@ class Player extends Actor
         this.yellState = new YellState(this);
         this.crouchState = new CrouchState(this);
         this.panicState = new PanicState(this);
+        this.deadState = new DeadState(this);
     }
 
     public update() {
@@ -56,6 +63,9 @@ class Player extends Actor
 
         if (this.baby.isDead && this.currentState != this.panicState) {
             this.changeState(this.panicState);
+        }
+        if (this.poofEffect.sprite.visible && !this.poofEffect.sprite.anims.isPlaying) {
+            this.poofEffect.sprite.setVisible(false);
         }
         super.update();
     }
@@ -70,6 +80,10 @@ class Player extends Actor
     }
 
     public onCollisionSolved(result: CollisionResult) {
+        if (result.isCrushed) {
+            this.disappearDie();
+            return;
+        }
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
 
@@ -83,6 +97,14 @@ class Player extends Actor
         else {
             this.speed.x -= deceleration * MathHelper.sign(this.speed.x);
         }
+    }
+
+    public disappearDie() {
+        this.deadState.hideOnDeath = true;
+        this.changeState(this.deadState);
+        this.poofEffect.sprite.setVisible(true);
+        this.poofEffect.updatePosition();
+        this.poofEffect.changeAnimation('poof');
     }
 
     public drawHitbox() {

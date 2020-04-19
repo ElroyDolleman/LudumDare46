@@ -16,10 +16,6 @@ module OnOffState
         }
 
         StateEvents.emit('switched');
-
-        // Set true for 1 frame
-        StateJustChanged = true;
-        setTimeout(() => { StateJustChanged = false; }, 0);
     }
 
     export function ForceState(state: TileTypes) {
