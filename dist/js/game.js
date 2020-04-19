@@ -44,10 +44,21 @@ var GameScene = /** @class */ (function (_super) {
     GameScene.prototype.create = function () {
         Scenes.Current = this;
         this.screenTransition = new ScreenTransition();
+        var frameNames = Scenes.Current.anims.generateFrameNames('effects', {
+            prefix: 'dust_',
+            suffix: '.png',
+            end: 5,
+            zeroPad: 2
+        });
+        frameNames.forEach(function (e) { Particles.DustFrames.push(e.frame.toString()); });
         this.inputManager = new InputManager(this);
         this.createLevel(this.currentLevelName);
     };
     GameScene.prototype.createLevel = function (levelName) {
+        if (ParticleManager)
+            ParticleManager.destroy();
+        ParticleManager = this.add.particles('effects');
+        ParticleManager.setDepth(1);
         this.level = this.levelLoader.load(levelName);
         CurrentLevel = this.level;
         this.player = new Player();
@@ -204,9 +215,10 @@ var Baby = /** @class */ (function (_super) {
         var _this = _super.call(this, new Phaser.Geom.Rectangle(16, 283, 5, 5)) || this;
         _this.mommy = mommy;
         _this.canTriggerOnOffSwitch = true;
+        _this.particlePlayer = new BabyParticlePlayer(_this);
         _this.animator = new BabyAnimator(_this);
         _this.poofEffect = new Animator(Scenes.Current.add.sprite(0, 0, 'effects', 'poof_00.png'), _this);
-        _this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 20, 0);
+        _this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 24, 0);
         _this.poofEffect.sprite.setVisible(false);
         _this.createStates();
         _this.changeState(_this.walkState);
@@ -294,6 +306,7 @@ var Baby = /** @class */ (function (_super) {
     Baby.prototype.destroy = function () {
         this.animator.destroy();
         this.poofEffect.destroy();
+        this.particlePlayer.destroy();
     };
     return Baby;
 }(Actor));
@@ -407,6 +420,27 @@ var BabyAnimator = /** @class */ (function (_super) {
     };
     return BabyAnimator;
 }(Animator));
+var BabyParticlePlayer = /** @class */ (function () {
+    function BabyParticlePlayer(baby) {
+        this.baby = baby;
+        this.deathFallEmitter = ParticleManager.createEmitter({
+            x: 0,
+            y: 0,
+            lifespan: { min: 370, max: 560 },
+            speed: { min: 4, max: 6 },
+            angle: [240, 270, 300],
+            frequency: -1,
+            emitZone: { source: new Phaser.Geom.Rectangle(-2, -1, 3, 1) },
+            frame: Particles.DustFrames
+        });
+    }
+    BabyParticlePlayer.prototype.playDeathFall = function () {
+        this.deathFallEmitter.explode(7, this.baby.hitbox.centerX, this.baby.hitbox.bottom);
+    };
+    BabyParticlePlayer.prototype.destroy = function () {
+    };
+    return BabyParticlePlayer;
+}());
 var BabyStats;
 (function (BabyStats) {
     BabyStats.DefaultWalkSpeed = 32;
@@ -448,6 +482,8 @@ var BabyAirborneState = /** @class */ (function (_super) {
             if (this.baby.speed.y >= BabyStats.DeadFallSpeed) {
                 this.baby.speed.y = 0;
                 this.baby.changeState(this.baby.deadState);
+                this.baby.particlePlayer.playDeathFall();
+                this.baby.animator.squish(1.5, 0.5, 220);
             }
             else {
                 this.baby.speed.y = 0;
@@ -1181,17 +1217,8 @@ var PlayerAnimator = /** @class */ (function (_super) {
 }(Animator));
 var PlayerParticlePlayer = /** @class */ (function () {
     function PlayerParticlePlayer(player) {
-        this.particles = Scenes.Current.add.particles('effects');
         this.player = player;
-        var frameNames = Scenes.Current.anims.generateFrameNames('effects', {
-            prefix: 'dust_',
-            suffix: '.png',
-            end: 5,
-            zeroPad: 2
-        });
-        var frames = [];
-        frameNames.forEach(function (e) { frames.push(e.frame.toString()); });
-        this.landDustEmitter = this.particles.createEmitter({
+        this.landDustEmitter = ParticleManager.createEmitter({
             x: 0,
             y: 0,
             lifespan: { min: 300, max: 500 },
@@ -1199,9 +1226,9 @@ var PlayerParticlePlayer = /** @class */ (function () {
             angle: 270,
             frequency: -1,
             emitZone: { source: new Phaser.Geom.Rectangle(-5, -3, 5, 1) },
-            frame: frames
+            frame: Particles.DustFrames
         });
-        this.jumpDustEmitter = this.particles.createEmitter({
+        this.jumpDustEmitter = ParticleManager.createEmitter({
             x: 0,
             y: 0,
             lifespan: { min: 200, max: 400 },
@@ -1209,9 +1236,9 @@ var PlayerParticlePlayer = /** @class */ (function () {
             angle: 270,
             frequency: -1,
             emitZone: { source: new Phaser.Geom.Rectangle(-5, -3, 5, 1) },
-            frame: frames
+            frame: Particles.DustFrames
         });
-        this.flyDustEmitter = this.particles.createEmitter({
+        this.flyDustEmitter = ParticleManager.createEmitter({
             x: 0,
             y: 0,
             lifespan: { min: 180, max: 240 },
@@ -1219,7 +1246,7 @@ var PlayerParticlePlayer = /** @class */ (function () {
             angle: 270,
             frequency: -1,
             emitZone: { source: new Phaser.Geom.Rectangle(-7, -4, 7, 2) },
-            frame: frames
+            frame: Particles.DustFrames
         });
     }
     PlayerParticlePlayer.prototype.playFly = function () {
@@ -1232,7 +1259,6 @@ var PlayerParticlePlayer = /** @class */ (function () {
         this.jumpDustEmitter.explode(8, this.player.hitbox.centerX, this.player.hitbox.bottom);
     };
     PlayerParticlePlayer.prototype.destroy = function () {
-        this.particles.destroy();
     };
     return PlayerParticlePlayer;
 }());
@@ -1857,9 +1883,14 @@ var GameTime;
 var TILE_WIDTH = 16;
 var TILE_HEIGHT = 16;
 var CurrentLevel;
+var ParticleManager;
 var Scenes;
 (function (Scenes) {
 })(Scenes || (Scenes = {}));
+var Particles;
+(function (Particles) {
+    Particles.DustFrames = [];
+})(Particles || (Particles = {}));
 var Inputs;
 (function (Inputs) {
 })(Inputs || (Inputs = {}));

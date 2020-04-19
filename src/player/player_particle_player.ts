@@ -1,6 +1,5 @@
 class PlayerParticlePlayer
 {
-    public particles: Phaser.GameObjects.Particles.ParticleEmitterManager;
     public landDustEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
     public jumpDustEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
     public flyDustEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -8,19 +7,9 @@ class PlayerParticlePlayer
     public player: Player;
 
     constructor(player: Player) {
-        this.particles = Scenes.Current.add.particles('effects');
         this.player = player;
 
-        let frameNames = Scenes.Current.anims.generateFrameNames('effects', { 
-            prefix: 'dust_',
-            suffix: '.png',
-            end: 5,
-            zeroPad: 2
-        });
-        let frames:string[] = [];
-        frameNames.forEach((e) => { frames.push(e.frame.toString()); });
-
-        this.landDustEmitter = this.particles.createEmitter({
+        this.landDustEmitter = ParticleManager.createEmitter({
             x: 0,
             y: 0,
             lifespan: { min: 300, max: 500 },
@@ -28,9 +17,9 @@ class PlayerParticlePlayer
             angle: 270,
             frequency: -1,
             emitZone: { source: new Phaser.Geom.Rectangle(-5, -3, 5, 1) },
-            frame: frames
+            frame: Particles.DustFrames
         });
-        this.jumpDustEmitter = this.particles.createEmitter({
+        this.jumpDustEmitter = ParticleManager.createEmitter({
             x: 0,
             y: 0,
             lifespan: { min: 200, max: 400 },
@@ -38,9 +27,9 @@ class PlayerParticlePlayer
             angle: 270,
             frequency: -1,
             emitZone: { source: new Phaser.Geom.Rectangle(-5, -3, 5, 1) },
-            frame: frames
+            frame: Particles.DustFrames
         });
-        this.flyDustEmitter = this.particles.createEmitter({
+        this.flyDustEmitter = ParticleManager.createEmitter({
             x: 0,
             y: 0,
             lifespan: { min: 180, max: 240 },
@@ -48,7 +37,7 @@ class PlayerParticlePlayer
             angle: 270,
             frequency: -1,
             emitZone: { source: new Phaser.Geom.Rectangle(-7, -4, 7, 2) },
-            frame: frames
+            frame: Particles.DustFrames
         });
     }
 
@@ -63,6 +52,6 @@ class PlayerParticlePlayer
     }
 
     public destroy() {
-        this.particles.destroy();
+
     }
 }

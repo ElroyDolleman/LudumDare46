@@ -38,11 +38,23 @@ class GameScene extends Phaser.Scene {
         Scenes.Current = this;
         this.screenTransition = new ScreenTransition();
 
+        let frameNames = Scenes.Current.anims.generateFrameNames('effects', { 
+            prefix: 'dust_',
+            suffix: '.png',
+            end: 5,
+            zeroPad: 2
+        });
+        frameNames.forEach((e) => { Particles.DustFrames.push(e.frame.toString()); });
+
         this.inputManager = new InputManager(this);
         this.createLevel(this.currentLevelName);
     }
 
     createLevel(levelName: string) {
+        if (ParticleManager) ParticleManager.destroy();
+        ParticleManager = this.add.particles('effects');
+        ParticleManager.setDepth(1);
+
         this.level = this.levelLoader.load(levelName);
         CurrentLevel = this.level;
 

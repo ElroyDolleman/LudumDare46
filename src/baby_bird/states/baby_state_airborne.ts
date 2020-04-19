@@ -20,6 +20,8 @@ class BabyAirborneState extends BabyBaseState
             if (this.baby.speed.y >= BabyStats.DeadFallSpeed) {
                 this.baby.speed.y = 0;
                 this.baby.changeState(this.baby.deadState);
+                this.baby.particlePlayer.playDeathFall();
+                this.baby.animator.squish(1.5, 0.5, 220);
             }
             else {
                 this.baby.speed.y = 0;

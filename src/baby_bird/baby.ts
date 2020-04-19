@@ -4,6 +4,7 @@ class Baby extends Actor
     public mommy: Player;
     public animator: BabyAnimator;
     public poofEffect: Animator;
+    public particlePlayer: BabyParticlePlayer;
 
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
@@ -22,6 +23,7 @@ class Baby extends Actor
         this.mommy = mommy;
         this.canTriggerOnOffSwitch = true;
 
+        this.particlePlayer = new BabyParticlePlayer(this);
         this.animator = new BabyAnimator(this);
         this.poofEffect = new Animator(Scenes.Current.add.sprite(0, 0, 'effects', 'poof_00.png'), this);
         this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 24, 0);
@@ -112,5 +114,6 @@ class Baby extends Actor
     public destroy() {
         this.animator.destroy();
         this.poofEffect.destroy();
+        this.particlePlayer.destroy();
     }
 }
