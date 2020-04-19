@@ -1629,6 +1629,12 @@ var CollisionManager = /** @class */ (function () {
         result.prevRight = actor.hitbox.right;
         result.prevBottom = actor.hitbox.bottom;
         actor.moveHorizontal();
+        if (actor.hitbox.x < 0) {
+            actor.hitbox.x = 0;
+        }
+        else if (actor.hitbox.right > 320) {
+            actor.hitbox.x = 320 - actor.hitbox.width;
+        }
         for (var i = 0; i < tiles.length; i++) {
             if (tiles[i].isEmpty || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
                 continue;
@@ -1673,6 +1679,12 @@ var CollisionManager = /** @class */ (function () {
             }
         }
         actor.moveVertical();
+        if (actor.hitbox.y < 0) {
+            actor.hitbox.y = 0;
+        }
+        else if (actor.hitbox.bottom > 320) {
+            actor.hitbox.y = 320 - actor.hitbox.height;
+        }
         for (var i = 0; i < tiles.length; i++) {
             if (tiles[i].isEmpty || !Phaser.Geom.Rectangle.Overlaps(tiles[i].hitbox, actor.hitbox)) {
                 continue;
