@@ -1203,16 +1203,45 @@ var PlayerAnimator = /** @class */ (function (_super) {
         _this.createAnimation('yell', 'player', 'playerbird_yell_', 4, 12, 1);
         _this.createAnimation('panic', 'player', 'playerbird_shocked_', 3, 20);
         _this.createAnimation('celebrate', 'player', 'playerbird_celebrate_', 4, 8);
+        _this.shoutSprite = Scenes.Current.add.sprite(0, 0, 'effects', 'shout_00.png');
+        _this.shoutSprite.setVisible(false);
+        _this.shoutSprite.setAlpha(0.5);
         return _this;
     }
     PlayerAnimator.prototype.update = function () {
         _super.prototype.update.call(this);
+        if (this.shoutSprite.visible) {
+            this.shoutTimer += GameTime.getElapsedMS();
+            if (this.shoutTimer >= 80) {
+                this.shoutTimer -= 80;
+                this.shoutSprite.y += 4;
+                if (this.shoutSprite.y > this.actor.hitbox.centerY + 2) {
+                    this.shoutSprite.y = this.actor.hitbox.centerY - 7;
+                }
+                //this.shoutSprite.setRotation(this.shoutSprite.rotation - 0.1);
+            }
+            if (this.sprite.anims.currentAnim.key != 'yell' || !this.sprite.anims.isPlaying) {
+                this.shoutSprite.setVisible(false);
+            }
+        }
     };
     PlayerAnimator.prototype.updatePosition = function () {
         this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
     };
     PlayerAnimator.prototype.changeAnimation = function (animation) {
         _super.prototype.changeAnimation.call(this, animation.key, animation.isSingleFrame);
+        if (animation.key == 'yell') {
+            this.shoutSprite.x = (this.facingDirection == 1 ? this.actor.hitbox.right : this.actor.hitbox.left) + (8 * this.facingDirection);
+            this.shoutSprite.y = this.actor.hitbox.centerY - 7;
+            //this.shoutSprite.setRotation(0.5);
+            this.shoutSprite.setFlipX(this.facingDirection == -1);
+            this.shoutSprite.setVisible(true);
+            this.shoutTimer = 0;
+        }
+    };
+    PlayerAnimator.prototype.destroy = function () {
+        _super.prototype.destroy.call(this);
+        this.shoutSprite.destroy();
     };
     return PlayerAnimator;
 }(Animator));

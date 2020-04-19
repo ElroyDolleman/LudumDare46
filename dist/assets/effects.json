@@ -4,8 +4,8 @@
 			"image": "effects.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 48,
-				"h": 48
+				"w": 49,
+				"h": 49
 			},
 			"scale": 1,
 			"frames": [
@@ -73,6 +73,48 @@
 					}
 				},
 				{
+					"filename": "shout_00.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 10,
+						"h": 5
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 10,
+						"h": 5
+					},
+					"frame": {
+						"x": 0,
+						"y": 44,
+						"w": 10,
+						"h": 5
+					}
+				},
+				{
+					"filename": "dust_03.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 4,
+						"y": 6,
+						"w": 6,
+						"h": 7
+					},
+					"frame": {
+						"x": 43,
+						"y": 0,
+						"w": 6,
+						"h": 7
+					}
+				},
+				{
 					"filename": "poof_02.png",
 					"rotated": false,
 					"trimmed": true,
@@ -115,27 +157,6 @@
 					}
 				},
 				{
-					"filename": "dust_00.png",
-					"rotated": false,
-					"trimmed": true,
-					"sourceSize": {
-						"w": 16,
-						"h": 16
-					},
-					"spriteSourceSize": {
-						"x": 5,
-						"y": 6,
-						"w": 5,
-						"h": 6
-					},
-					"frame": {
-						"x": 43,
-						"y": 0,
-						"w": 5,
-						"h": 6
-					}
-				},
-				{
 					"filename": "poof_00.png",
 					"rotated": false,
 					"trimmed": true,
@@ -157,27 +178,6 @@
 					}
 				},
 				{
-					"filename": "dust_01.png",
-					"rotated": false,
-					"trimmed": true,
-					"sourceSize": {
-						"w": 16,
-						"h": 16
-					},
-					"spriteSourceSize": {
-						"x": 5,
-						"y": 10,
-						"w": 6,
-						"h": 4
-					},
-					"frame": {
-						"x": 0,
-						"y": 44,
-						"w": 6,
-						"h": 4
-					}
-				},
-				{
 					"filename": "dust_04.png",
 					"rotated": false,
 					"trimmed": true,
@@ -192,10 +192,31 @@
 						"h": 5
 					},
 					"frame": {
-						"x": 43,
-						"y": 6,
+						"x": 10,
+						"y": 44,
 						"w": 5,
 						"h": 5
+					}
+				},
+				{
+					"filename": "dust_01.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 5,
+						"y": 10,
+						"w": 6,
+						"h": 4
+					},
+					"frame": {
+						"x": 43,
+						"y": 7,
+						"w": 6,
+						"h": 4
 					}
 				},
 				{
@@ -220,7 +241,7 @@
 					}
 				},
 				{
-					"filename": "dust_03.png",
+					"filename": "dust_00.png",
 					"rotated": false,
 					"trimmed": true,
 					"sourceSize": {
@@ -228,16 +249,16 @@
 						"h": 16
 					},
 					"spriteSourceSize": {
-						"x": 4,
+						"x": 5,
 						"y": 6,
-						"w": 6,
-						"h": 7
+						"w": 5,
+						"h": 6
 					},
 					"frame": {
-						"x": 28,
-						"y": 40,
-						"w": 6,
-						"h": 7
+						"x": 43,
+						"y": 11,
+						"w": 5,
+						"h": 6
 					}
 				}
 			]
@@ -246,6 +267,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:7dbb0ce7ecd2afcf7f908de36380056d:f66a9119ae4eeef82ec750cebcef4376:05d3c1256da5d10ff4f36ef2966c3322$"
+		"smartupdate": "$TexturePacker:SmartUpdate:5402419fd21b4dfd0d93a5e235caded5:e2ac51b9206f84b5b6ac647ac1a77f61:05d3c1256da5d10ff4f36ef2966c3322$"
 	}
 }
