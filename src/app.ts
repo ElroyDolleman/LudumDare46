@@ -6,7 +6,7 @@ let config = {
     height: 320,
     scaleMode: 3,
     pixelArt: true,
-    backgroundColor: '#3CBCFC',
+    backgroundColor: '#0x0',
     title: "Ludum Dare 46",
     version: "0.1.0",
     disableContextMenu: true,

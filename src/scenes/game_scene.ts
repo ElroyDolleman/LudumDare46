@@ -19,6 +19,8 @@ class GameScene extends Phaser.Scene {
     public level: Level;
     public currentLevelNumber = 1;
 
+    public screenTransition: ScreenTransition;
+
     public get currentLevelName(): string { return 'level' + ('0' + this.currentLevelNumber).slice(-2); }
 
     init() {
@@ -34,6 +36,7 @@ class GameScene extends Phaser.Scene {
 
     create() {
         Scenes.Current = this;
+        this.screenTransition = new ScreenTransition();
 
         this.inputManager = new InputManager(this);
         this.createLevel(this.currentLevelName);
@@ -58,6 +61,10 @@ class GameScene extends Phaser.Scene {
         this.level.collidableActors.push(this.baby);
 
         this.levelState = LevelStates.Prepare;
+
+        this.screenTransition.startSecondPhase();
+
+        this.cameras.main.setBackgroundColor(0x3CBCFC);
     }
 
     update(time: number, delta: number) {
@@ -65,7 +72,8 @@ class GameScene extends Phaser.Scene {
             return;
         }
         if (this.levelState == LevelStates.Prepare) {
-            if (this.inputManager.anyKeyDown) {
+            this.screenTransition.update();
+            if (this.inputManager.anyKeyDown && this.screenTransition.done) {
                 this.levelState = LevelStates.Playing;
             }
             else return;
@@ -89,15 +97,28 @@ class GameScene extends Phaser.Scene {
         OnOffState.StateJustChanged = this.prevOnState != OnOffState.CurrentOnType;
         if (this.player.lost && this.levelState != LevelStates.Lost) {
             this.levelState = LevelStates.Lost;
+            this.screenTransition.active = false;
             setTimeout(() => {
-                this.reset();
-            }, 1500);
+                this.screenTransition.active = true;
+                this.screenTransition.startFirstPhase();
+            }, 1000);
         }
         else if (this.player.hasWon && this.levelState != LevelStates.Win) {
             this.levelState = LevelStates.Win;
+            this.screenTransition.active = false;
             setTimeout(() => {
-                this.nextLevel();
-            }, 2700);
+                this.screenTransition.active = true;
+                this.screenTransition.startFirstPhase();
+            }, 1700);
+        }
+
+        if (this.levelState == LevelStates.Win || this.levelState == LevelStates.Lost) {
+            this.screenTransition.update();
+
+            if (this.screenTransition.done) {
+                if (this.levelState == LevelStates.Win) this.nextLevel();
+                else if (this.levelState == LevelStates.Lost) this.reset();
+            }
         }
     }
 

@@ -24,7 +24,7 @@ var GameScene = /** @class */ (function (_super) {
     function GameScene() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.prevOnState = OnOffState.CurrentOnType;
-        _this.currentLevelNumber = 8;
+        _this.currentLevelNumber = 1;
         return _this;
     }
     Object.defineProperty(GameScene.prototype, "currentLevelName", {
@@ -43,6 +43,7 @@ var GameScene = /** @class */ (function (_super) {
     };
     GameScene.prototype.create = function () {
         Scenes.Current = this;
+        this.screenTransition = new ScreenTransition();
         this.inputManager = new InputManager(this);
         this.createLevel(this.currentLevelName);
     };
@@ -62,6 +63,8 @@ var GameScene = /** @class */ (function (_super) {
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
         this.levelState = LevelStates.Prepare;
+        this.screenTransition.startSecondPhase();
+        this.cameras.main.setBackgroundColor(0x3CBCFC);
     };
     GameScene.prototype.update = function (time, delta) {
         var _this = this;
@@ -69,7 +72,8 @@ var GameScene = /** @class */ (function (_super) {
             return;
         }
         if (this.levelState == LevelStates.Prepare) {
-            if (this.inputManager.anyKeyDown) {
+            this.screenTransition.update();
+            if (this.inputManager.anyKeyDown && this.screenTransition.done) {
                 this.levelState = LevelStates.Playing;
             }
             else
@@ -89,15 +93,28 @@ var GameScene = /** @class */ (function (_super) {
         OnOffState.StateJustChanged = this.prevOnState != OnOffState.CurrentOnType;
         if (this.player.lost && this.levelState != LevelStates.Lost) {
             this.levelState = LevelStates.Lost;
+            this.screenTransition.active = false;
             setTimeout(function () {
-                _this.reset();
-            }, 1500);
+                _this.screenTransition.active = true;
+                _this.screenTransition.startFirstPhase();
+            }, 1000);
         }
         else if (this.player.hasWon && this.levelState != LevelStates.Win) {
             this.levelState = LevelStates.Win;
+            this.screenTransition.active = false;
             setTimeout(function () {
-                _this.nextLevel();
-            }, 2700);
+                _this.screenTransition.active = true;
+                _this.screenTransition.startFirstPhase();
+            }, 1700);
+        }
+        if (this.levelState == LevelStates.Win || this.levelState == LevelStates.Lost) {
+            this.screenTransition.update();
+            if (this.screenTransition.done) {
+                if (this.levelState == LevelStates.Win)
+                    this.nextLevel();
+                else if (this.levelState == LevelStates.Lost)
+                    this.reset();
+            }
         }
     };
     GameScene.prototype.nextLevel = function () {
@@ -131,7 +148,7 @@ var config = {
     height: 320,
     scaleMode: 3,
     pixelArt: true,
-    backgroundColor: '#3CBCFC',
+    backgroundColor: '#0x0',
     title: "Ludum Dare 46",
     version: "0.1.0",
     disableContextMenu: true,
@@ -984,8 +1001,8 @@ var Player = /** @class */ (function (_super) {
         _this.createStates();
         _this.currentState = _this.idleState;
         _this.currentState.enter();
-        _this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
         return _this;
+        //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
     Object.defineProperty(Player.prototype, "bounceHitbox", {
         get: function () { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); },
@@ -1111,10 +1128,10 @@ var Player = /** @class */ (function (_super) {
         this.poofEffect.changeAnimation('poof');
     };
     Player.prototype.drawHitbox = function () {
-        this.hitboxGraphics.clear();
-        this.hitboxGraphics.depth = 10;
-        //this.hitboxGraphics.fillRectShape(this.hitbox);
-        this.hitboxGraphics.fillCircleShape(this.yellArea);
+        // this.hitboxGraphics.clear();
+        // this.hitboxGraphics.depth = 10;
+        // this.hitboxGraphics.fillRectShape(this.hitbox);
+        // this.hitboxGraphics.fillCircleShape(this.yellArea);
     };
     Player.prototype.destroy = function () {
         this.animator.destroy();
@@ -1824,4 +1841,65 @@ var OnOffState;
     }
     OnOffState.ForceState = ForceState;
 })(OnOffState || (OnOffState = {}));
+var ScreenTransition = /** @class */ (function () {
+    function ScreenTransition() {
+        this.active = true;
+        this.graphics = Scenes.Current.add.graphics({ lineStyle: { width: 2, color: 0x0 }, fillStyle: { color: 0x0, alpha: 1 } });
+        this.graphics.depth = 69;
+        this.create();
+    }
+    Object.defineProperty(ScreenTransition.prototype, "done", {
+        get: function () { return this.time == 1 && this.active; },
+        enumerable: true,
+        configurable: true
+    });
+    ;
+    ScreenTransition.prototype.create = function () {
+        this.graphics.clear();
+        var left1 = -60;
+        var left2 = -10;
+        var right1 = 380;
+        var right2 = 330;
+        var points = [{ x: left2, y: 0 }];
+        for (var y = 320 / 8; y <= 320; y += 320 / 8) {
+            points.push({ x: left1, y: y });
+            points.push({ x: left2, y: y });
+            left1 -= 10;
+            left2 -= 10;
+        }
+        for (var y = 320; y >= 0; y -= 320 / 8) {
+            points.push({ x: right1, y: y });
+            points.push({ x: right2, y: y });
+            right1 += 10;
+            right2 += 10;
+        }
+        this.graphics.fillPoints(points);
+        this.graphics.x = 380;
+    };
+    ScreenTransition.prototype.startFirstPhase = function () {
+        this.graphics.setVisible(true);
+        this.time = 0;
+        this.graphics.x = 440;
+        this.startX = 440;
+        this.targetX = 0;
+    };
+    ScreenTransition.prototype.startSecondPhase = function () {
+        this.graphics.setVisible(true);
+        this.time = 0;
+        this.graphics.x = 0;
+        this.startX = 0;
+        this.targetX = -440;
+    };
+    ScreenTransition.prototype.update = function () {
+        if (this.time == 1 || !this.active) {
+            return;
+        }
+        this.time = Math.min(1, this.time + GameTime.getElapsed() * 2.5);
+        this.graphics.x = Phaser.Math.Linear(this.startX, this.targetX, this.time);
+        if (this.time == 1 && this.graphics.x <= -380) {
+            this.graphics.setVisible(false);
+        }
+    };
+    return ScreenTransition;
+}());
 //# sourceMappingURL=game.js.map
