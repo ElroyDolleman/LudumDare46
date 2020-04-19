@@ -115,6 +115,27 @@
 					}
 				},
 				{
+					"filename": "dust_00.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 5,
+						"y": 6,
+						"w": 5,
+						"h": 6
+					},
+					"frame": {
+						"x": 43,
+						"y": 0,
+						"w": 5,
+						"h": 6
+					}
+				},
+				{
 					"filename": "poof_00.png",
 					"rotated": false,
 					"trimmed": true,
@@ -134,6 +155,90 @@
 						"w": 10,
 						"h": 10
 					}
+				},
+				{
+					"filename": "dust_01.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 5,
+						"y": 10,
+						"w": 6,
+						"h": 4
+					},
+					"frame": {
+						"x": 0,
+						"y": 44,
+						"w": 6,
+						"h": 4
+					}
+				},
+				{
+					"filename": "dust_04.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 4,
+						"y": 7,
+						"w": 5,
+						"h": 5
+					},
+					"frame": {
+						"x": 43,
+						"y": 6,
+						"w": 5,
+						"h": 5
+					}
+				},
+				{
+					"filename": "dust_02.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 5,
+						"y": 5,
+						"w": 8,
+						"h": 6
+					},
+					"frame": {
+						"x": 20,
+						"y": 40,
+						"w": 8,
+						"h": 6
+					}
+				},
+				{
+					"filename": "dust_03.png",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 16,
+						"h": 16
+					},
+					"spriteSourceSize": {
+						"x": 4,
+						"y": 6,
+						"w": 6,
+						"h": 7
+					},
+					"frame": {
+						"x": 28,
+						"y": 40,
+						"w": 6,
+						"h": 7
+					}
 				}
 			]
 		}
@@ -141,6 +246,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:b67644bc79c8160727fa26b61ebb16d6:df7ce6f7e4753d3aa94b6fdb6fb4857e:05d3c1256da5d10ff4f36ef2966c3322$"
+		"smartupdate": "$TexturePacker:SmartUpdate:7dbb0ce7ecd2afcf7f908de36380056d:f66a9119ae4eeef82ec750cebcef4376:05d3c1256da5d10ff4f36ef2966c3322$"
 	}
 }

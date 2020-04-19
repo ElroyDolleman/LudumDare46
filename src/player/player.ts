@@ -16,6 +16,7 @@ class Player extends Actor
     public baby: Baby;
     public animator: PlayerAnimator;
     public poofEffect: Animator;
+    public particlePlayer: PlayerParticlePlayer;
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
     public get bounceHitbox(): Phaser.Geom.Rectangle { return new Phaser.Geom.Rectangle(this.x - 2, this.y - 1, this.hitbox.width + 4, 5); };
@@ -46,6 +47,8 @@ class Player extends Actor
         this.createStates();
         this.currentState = this.idleState;
         this.currentState.enter();
+
+        this.particlePlayer = new PlayerParticlePlayer(this);
 
         //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
@@ -145,5 +148,6 @@ class Player extends Actor
     public destroy() {
         this.animator.destroy();
         this.poofEffect.destroy();
+        this.particlePlayer.destroy();
     }
 }

@@ -29,11 +29,20 @@ class AirborneState extends BaseState
     }
 
     protected land() {
+        let landImpact = this.player.speed.y;
         this.player.speed.y = 0;
-        this.player.changeState(this.player.speed.x == 0 ? this.player.idleState : this.player.runState); 
+        this.player.changeState(this.player.speed.x == 0 ? this.player.idleState : this.player.runState);
+
+        if (landImpact == PlayerStats.DefaultMaxFallSpeed) {
+            this.player.animator.squish(1.1, 0.8, 240);
+            this.player.particlePlayer.playLand();
+        } else {
+            this.player.animator.squish(1, 0.8, 160);
+        }
     }
 
     protected headbonk() {
         this.player.speed.y = 0;
+        this.player.animator.squish(1.1, 0.8, 140);
     }
 }

@@ -1001,6 +1001,7 @@ var Player = /** @class */ (function (_super) {
         _this.createStates();
         _this.currentState = _this.idleState;
         _this.currentState.enter();
+        _this.particlePlayer = new PlayerParticlePlayer(_this);
         return _this;
         //this.hitboxGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xFF0000, alpha: 0.5 } });
     }
@@ -1136,6 +1137,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.destroy = function () {
         this.animator.destroy();
         this.poofEffect.destroy();
+        this.particlePlayer.destroy();
     };
     return Player;
 }(Actor));
@@ -1177,6 +1179,63 @@ var PlayerAnimator = /** @class */ (function (_super) {
     };
     return PlayerAnimator;
 }(Animator));
+var PlayerParticlePlayer = /** @class */ (function () {
+    function PlayerParticlePlayer(player) {
+        this.particles = Scenes.Current.add.particles('effects');
+        this.player = player;
+        var frameNames = Scenes.Current.anims.generateFrameNames('effects', {
+            prefix: 'dust_',
+            suffix: '.png',
+            end: 5,
+            zeroPad: 2
+        });
+        var frames = [];
+        frameNames.forEach(function (e) { frames.push(e.frame.toString()); });
+        this.landDustEmitter = this.particles.createEmitter({
+            x: 0,
+            y: 0,
+            lifespan: { min: 300, max: 500 },
+            speed: { min: 3, max: 5 },
+            angle: 270,
+            frequency: -1,
+            emitZone: { source: new Phaser.Geom.Rectangle(-5, -3, 5, 1) },
+            frame: frames
+        });
+        this.jumpDustEmitter = this.particles.createEmitter({
+            x: 0,
+            y: 0,
+            lifespan: { min: 200, max: 400 },
+            speed: { min: 10, max: 15 },
+            angle: 270,
+            frequency: -1,
+            emitZone: { source: new Phaser.Geom.Rectangle(-5, -3, 5, 1) },
+            frame: frames
+        });
+        this.flyDustEmitter = this.particles.createEmitter({
+            x: 0,
+            y: 0,
+            lifespan: { min: 180, max: 240 },
+            speed: { min: 17, max: 22 },
+            angle: 270,
+            frequency: -1,
+            emitZone: { source: new Phaser.Geom.Rectangle(-7, -4, 7, 2) },
+            frame: frames
+        });
+    }
+    PlayerParticlePlayer.prototype.playFly = function () {
+        this.flyDustEmitter.explode(6, this.player.hitbox.centerX, this.player.hitbox.centerY);
+    };
+    PlayerParticlePlayer.prototype.playLand = function () {
+        this.landDustEmitter.explode(12, this.player.hitbox.centerX, this.player.hitbox.bottom);
+    };
+    PlayerParticlePlayer.prototype.playJump = function () {
+        this.jumpDustEmitter.explode(8, this.player.hitbox.centerX, this.player.hitbox.bottom);
+    };
+    PlayerParticlePlayer.prototype.destroy = function () {
+        this.particles.destroy();
+    };
+    return PlayerParticlePlayer;
+}());
 var PlayerStats;
 (function (PlayerStats) {
     PlayerStats.DefaultHitboxHeight = 10;
@@ -1260,11 +1319,20 @@ var AirborneState = /** @class */ (function (_super) {
         }
     };
     AirborneState.prototype.land = function () {
+        var landImpact = this.player.speed.y;
         this.player.speed.y = 0;
         this.player.changeState(this.player.speed.x == 0 ? this.player.idleState : this.player.runState);
+        if (landImpact == PlayerStats.DefaultMaxFallSpeed) {
+            this.player.animator.squish(1.1, 0.8, 240);
+            this.player.particlePlayer.playLand();
+        }
+        else {
+            this.player.animator.squish(1, 0.8, 160);
+        }
     };
     AirborneState.prototype.headbonk = function () {
         this.player.speed.y = 0;
+        this.player.animator.squish(1.1, 0.8, 140);
     };
     return AirborneState;
 }(BaseState));
@@ -1395,6 +1463,7 @@ var FlyState = /** @class */ (function (_super) {
     FlyState.prototype.enter = function () {
         this.player.animator.changeAnimation(PlayerAnimations.Fly);
         this.player.speed.y = -PlayerStats.FlyPower;
+        this.playFlap();
     };
     FlyState.prototype.update = function () {
         this.updateMovementControls();
@@ -1404,6 +1473,7 @@ var FlyState = /** @class */ (function (_super) {
         }
         else if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames <= 1) {
             this.player.speed.y = -PlayerStats.FlyPower;
+            this.playFlap();
         }
         else {
             this.updateGravity(PlayerStats.FlyingGravity, PlayerStats.FlyingMaxFallSpeed);
@@ -1414,6 +1484,10 @@ var FlyState = /** @class */ (function (_super) {
         else {
             this.player.animator.setTimeScale(0.5);
         }
+    };
+    FlyState.prototype.playFlap = function () {
+        this.player.particlePlayer.playFly();
+        this.player.animator.squish(1.1, 0.85, 100);
     };
     FlyState.prototype.onCollisionSolved = function (result) {
         _super.prototype.onCollisionSolved.call(this, result);
@@ -1450,6 +1524,8 @@ var JumpState = /** @class */ (function (_super) {
     JumpState.prototype.enter = function () {
         this.isHoldingJump = true;
         this.player.animator.changeAnimation(PlayerAnimations.Jump);
+        this.player.animator.squish(1.1, 0.8, 220);
+        this.player.particlePlayer.playJump();
     };
     JumpState.prototype.update = function () {
         this.updateMovementControls();

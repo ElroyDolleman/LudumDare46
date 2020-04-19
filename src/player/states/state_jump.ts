@@ -11,6 +11,8 @@ class JumpState extends AirborneState
     public enter() {
         this.isHoldingJump = true;
         this.player.animator.changeAnimation(PlayerAnimations.Jump);
+        this.player.animator.squish(1.1, 0.8, 220);
+        this.player.particlePlayer.playJump();
     }
  
     public update() {

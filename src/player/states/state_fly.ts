@@ -7,6 +7,7 @@ class FlyState extends AirborneState
     public enter() {
         this.player.animator.changeAnimation(PlayerAnimations.Fly);
         this.player.speed.y = -PlayerStats.FlyPower;
+        this.playFlap();
     }
  
     public update() {
@@ -18,6 +19,7 @@ class FlyState extends AirborneState
         }
         else if (Inputs.Jump.key.isDown && Inputs.Jump.heldDownFrames <= 1) {
             this.player.speed.y = -PlayerStats.FlyPower;
+            this.playFlap();
         }
         else {
             this.updateGravity(PlayerStats.FlyingGravity, PlayerStats.FlyingMaxFallSpeed);
@@ -29,6 +31,11 @@ class FlyState extends AirborneState
         else {
             this.player.animator.setTimeScale(0.5);
         }
+    }
+
+    private playFlap() {
+        this.player.particlePlayer.playFly();
+        this.player.animator.squish(1.1, 0.85, 100);
     }
 
     public onCollisionSolved(result: CollisionResult) {
