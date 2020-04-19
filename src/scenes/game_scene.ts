@@ -1,4 +1,11 @@
-class PlaygroundScene extends Phaser.Scene {
+enum LevelStates {
+    Playing,
+    Pause,
+    Lost,
+    Win,
+}
+
+class GameScene extends Phaser.Scene {
 
     public player: Player;
     public baby: Baby;
@@ -6,6 +13,8 @@ class PlaygroundScene extends Phaser.Scene {
     public level: Level;
     public inputManager: InputManager;
     public prevOnState = OnOffState.CurrentOnType;
+
+    public levelState: LevelStates;
 
     init() {
         this.levelLoader = new LevelLoader(this);
@@ -22,7 +31,11 @@ class PlaygroundScene extends Phaser.Scene {
         Scenes.Current = this;
 
         this.inputManager = new InputManager(this);
-        this.level = this.levelLoader.load('level02');
+        this.createLevel('level02');
+    }
+
+    createLevel(levelName: string) {
+        this.level = this.levelLoader.load(levelName);
         CurrentLevel = this.level;
 
         this.player = new Player();
@@ -36,9 +49,15 @@ class PlaygroundScene extends Phaser.Scene {
 
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
+
+        this.levelState = LevelStates.Playing;
     }
 
     update(time: number, delta: number) {
+        if (this.levelState == LevelStates.Pause) {
+            return;
+        }
+
         this.prevOnState = OnOffState.CurrentOnType;
         this.inputManager.update();
 
@@ -53,10 +72,35 @@ class PlaygroundScene extends Phaser.Scene {
         if (this.baby.isDead) {
             this.level.removeCollidableActor(this.baby);
         }
-        else if (this.baby.isSafe) {
-            
-        }
 
         OnOffState.StateJustChanged = this.prevOnState != OnOffState.CurrentOnType;
+        if (this.player.lost && this.levelState != LevelStates.Lost) {
+            this.levelState = LevelStates.Lost;
+            setTimeout(() => {
+                this.reset();
+            }, 1500);
+        }
+        else if (this.player.hasWon && this.levelState != LevelStates.Win) {
+            this.levelState = LevelStates.Win;
+            setTimeout(() => {
+                this.reset();
+            }, 2700);
+        }
+    }
+
+    reset() {
+        let name = this.level.name;
+        this.destroy();
+        this.createLevel(name);
+    }
+
+    destroy() {
+        OnOffState.ForceState(TileTypes.OnOffBlockA);
+        OnOffState.StateEvents.removeAllListeners('switched');
+        OnOffState.StateJustChanged = false;
+
+        this.player.destroy();
+        this.baby.destroy();
+        this.level.destroy();
     }
 }

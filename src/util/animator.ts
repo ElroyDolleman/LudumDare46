@@ -84,4 +84,8 @@ class Animator
             this.sprite.scaleY = Phaser.Math.Linear(this.currentSquish.scaleY, 1, t);
         }
     }
+
+    public destroy() {
+        this.sprite.destroy();
+    }
 }

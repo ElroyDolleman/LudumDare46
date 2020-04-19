@@ -1,4 +1,4 @@
-/// <reference path="scenes/playground_scene.ts"/>
+/// <reference path="scenes/game_scene.ts"/>
 
 let config = {
     type: Phaser.AUTO,
@@ -10,7 +10,7 @@ let config = {
     title: "Ludum Dare 46",
     version: "0.0.1",
     disableContextMenu: true,
-    scene: [ PlaygroundScene ],
+    scene: [ GameScene ],
 };
 
 let game = new Phaser.Game(config);

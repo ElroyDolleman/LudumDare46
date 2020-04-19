@@ -11,26 +11,36 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var PlaygroundScene = /** @class */ (function (_super) {
-    __extends(PlaygroundScene, _super);
-    function PlaygroundScene() {
+var LevelStates;
+(function (LevelStates) {
+    LevelStates[LevelStates["Playing"] = 0] = "Playing";
+    LevelStates[LevelStates["Pause"] = 1] = "Pause";
+    LevelStates[LevelStates["Lost"] = 2] = "Lost";
+    LevelStates[LevelStates["Win"] = 3] = "Win";
+})(LevelStates || (LevelStates = {}));
+var GameScene = /** @class */ (function (_super) {
+    __extends(GameScene, _super);
+    function GameScene() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.prevOnState = OnOffState.CurrentOnType;
         return _this;
     }
-    PlaygroundScene.prototype.init = function () {
+    GameScene.prototype.init = function () {
         this.levelLoader = new LevelLoader(this);
     };
-    PlaygroundScene.prototype.preload = function () {
+    GameScene.prototype.preload = function () {
         this.load.atlas('player', 'assets/player.png', 'assets/player.json');
         this.load.atlas('effects', 'assets/effects.png', 'assets/effects.json');
         this.load.spritesheet('tileset', 'assets/tileset.png', { frameWidth: TILE_WIDTH, frameHeight: TILE_HEIGHT });
         this.levelLoader.preloadJsonFiles();
     };
-    PlaygroundScene.prototype.create = function () {
+    GameScene.prototype.create = function () {
         Scenes.Current = this;
         this.inputManager = new InputManager(this);
-        this.level = this.levelLoader.load('level02');
+        this.createLevel('level02');
+    };
+    GameScene.prototype.createLevel = function (levelName) {
+        this.level = this.levelLoader.load(levelName);
         CurrentLevel = this.level;
         this.player = new Player();
         this.baby = new Baby(this.player);
@@ -42,8 +52,13 @@ var PlaygroundScene = /** @class */ (function (_super) {
         this.baby.y = this.level.babySpawn.y;
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
+        this.levelState = LevelStates.Playing;
     };
-    PlaygroundScene.prototype.update = function (time, delta) {
+    GameScene.prototype.update = function (time, delta) {
+        var _this = this;
+        if (this.levelState == LevelStates.Pause) {
+            return;
+        }
         this.prevOnState = OnOffState.CurrentOnType;
         this.inputManager.update();
         this.player.update();
@@ -55,13 +70,36 @@ var PlaygroundScene = /** @class */ (function (_super) {
         if (this.baby.isDead) {
             this.level.removeCollidableActor(this.baby);
         }
-        else if (this.baby.isSafe) {
-        }
         OnOffState.StateJustChanged = this.prevOnState != OnOffState.CurrentOnType;
+        if (this.player.lost && this.levelState != LevelStates.Lost) {
+            this.levelState = LevelStates.Lost;
+            setTimeout(function () {
+                _this.reset();
+            }, 1500);
+        }
+        else if (this.player.hasWon && this.levelState != LevelStates.Win) {
+            this.levelState = LevelStates.Win;
+            setTimeout(function () {
+                _this.reset();
+            }, 2700);
+        }
     };
-    return PlaygroundScene;
+    GameScene.prototype.reset = function () {
+        var name = this.level.name;
+        this.destroy();
+        this.createLevel(name);
+    };
+    GameScene.prototype.destroy = function () {
+        OnOffState.ForceState(TileTypes.OnOffBlockA);
+        OnOffState.StateEvents.removeAllListeners('switched');
+        OnOffState.StateJustChanged = false;
+        this.player.destroy();
+        this.baby.destroy();
+        this.level.destroy();
+    };
+    return GameScene;
 }(Phaser.Scene));
-/// <reference path="scenes/playground_scene.ts"/>
+/// <reference path="scenes/game_scene.ts"/>
 var config = {
     type: Phaser.AUTO,
     width: 320,
@@ -72,7 +110,7 @@ var config = {
     title: "Ludum Dare 46",
     version: "0.0.1",
     disableContextMenu: true,
-    scene: [PlaygroundScene],
+    scene: [GameScene],
 };
 var game = new Phaser.Game(config);
 var Actor = /** @class */ (function () {
@@ -211,6 +249,10 @@ var Baby = /** @class */ (function (_super) {
         this.poofEffect.updatePosition();
         this.poofEffect.changeAnimation('poof');
     };
+    Baby.prototype.destroy = function () {
+        this.animator.destroy();
+        this.poofEffect.destroy();
+    };
     return Baby;
 }(Actor));
 var Animator = /** @class */ (function () {
@@ -296,6 +338,9 @@ var Animator = /** @class */ (function () {
             this.sprite.scaleX = Phaser.Math.Linear(this.currentSquish.scaleX, 1, t);
             this.sprite.scaleY = Phaser.Math.Linear(this.currentSquish.scaleY, 1, t);
         }
+    };
+    Animator.prototype.destroy = function () {
+        this.sprite.destroy();
     };
     return Animator;
 }());
@@ -526,11 +571,12 @@ var BabyWalkState = /** @class */ (function (_super) {
     return BabyWalkState;
 }(BabyGroundedState));
 var Level = /** @class */ (function () {
-    function Level(map, goalPieces, babySpawn) {
+    function Level(map, name, goalPieces, babySpawn) {
         var _this = this;
         this.collisionManager = new CollisionManager(this);
         this.collidableActors = [];
         this.map = map;
+        this.name = name;
         this.babySpawn = babySpawn;
         this.goalPieces = [];
         goalPieces.forEach(function (pos) {
@@ -570,6 +616,9 @@ var Level = /** @class */ (function () {
             return;
         this.collidableActors.splice(index, 1);
     };
+    Level.prototype.destroy = function () {
+        this.map.destroy();
+    };
     return Level;
 }());
 var FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
@@ -587,7 +636,7 @@ var LevelLoader = /** @class */ (function () {
         this.babySpawn = new Phaser.Math.Vector2();
         var levelJson = this.scene.cache.json.get('levels')[name];
         var map = this.createTilemap(levelJson);
-        return new Level(map, this.goalPieces, this.babySpawn);
+        return new Level(map, name, this.goalPieces, this.babySpawn);
     };
     LevelLoader.prototype.createTilemap = function (levelJson) {
         var tilesetName = levelJson['tileset'];
@@ -814,6 +863,11 @@ var Tile = /** @class */ (function () {
             }
         }
     };
+    Tile.prototype.destroy = function () {
+        if (this.sprite) {
+            this.sprite.destroy();
+        }
+    };
     return Tile;
 }());
 var Tilemap = /** @class */ (function () {
@@ -869,6 +923,12 @@ var Tilemap = /** @class */ (function () {
         this.tiles.forEach(function (tile) {
             tile.clearHitbox();
         });
+    };
+    Tilemap.prototype.destroy = function () {
+        while (this.tiles.length > 0) {
+            this.tiles[0].destroy();
+            this.tiles.splice(0, 1);
+        }
     };
     return Tilemap;
 }());
@@ -1015,6 +1075,10 @@ var Player = /** @class */ (function (_super) {
         this.hitboxGraphics.clear();
         this.hitboxGraphics.depth = 10;
         this.hitboxGraphics.fillRectShape(this.hitbox);
+    };
+    Player.prototype.destroy = function () {
+        this.animator.destroy();
+        this.poofEffect.destroy();
     };
     return Player;
 }(Actor));

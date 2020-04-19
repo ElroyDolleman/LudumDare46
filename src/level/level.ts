@@ -6,11 +6,13 @@ class Level
     public goalPieces: Tile[];
     public goalPos: Phaser.Math.Vector2;
     public babySpawn: Phaser.Math.Vector2;
+    public name: string;
 
-    constructor(map: Tilemap, goalPieces: Phaser.Geom.Point[], babySpawn: Phaser.Math.Vector2) {
+    constructor(map: Tilemap, name: string, goalPieces: Phaser.Geom.Point[], babySpawn: Phaser.Math.Vector2) {
         this.collisionManager = new CollisionManager(this);
         this.collidableActors = [];
         this.map = map;
+        this.name = name;
         this.babySpawn = babySpawn;
 
         this.goalPieces = [];
@@ -55,5 +57,9 @@ class Level
         let index = this.collidableActors.indexOf(actor);
         if (index < 0) return;
         this.collidableActors.splice(index, 1);
+    }
+
+    public destroy() {
+        this.map.destroy();
     }
 }

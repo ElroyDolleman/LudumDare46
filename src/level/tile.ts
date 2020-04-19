@@ -119,4 +119,10 @@ class Tile {
             }
         }
     }
+
+    public destroy() {
+        if (this.sprite) {
+            this.sprite.destroy();
+        }
+    }
 }

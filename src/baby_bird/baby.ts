@@ -108,4 +108,9 @@ class Baby extends Actor
         this.poofEffect.updatePosition();
         this.poofEffect.changeAnimation('poof');
     }
+
+    public destroy() {
+        this.animator.destroy();
+        this.poofEffect.destroy();
+    }
 }

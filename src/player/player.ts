@@ -140,4 +140,9 @@ class Player extends Actor
         this.hitboxGraphics.depth = 10;
         this.hitboxGraphics.fillRectShape(this.hitbox);
     }
+
+    public destroy() {
+        this.animator.destroy();
+        this.poofEffect.destroy();
+    }
 }

@@ -24,7 +24,7 @@ class LevelLoader {
         let levelJson = this.scene.cache.json.get('levels')[name];
         let map = this.createTilemap(levelJson);
 
-        return new Level(map, this.goalPieces, this.babySpawn);
+        return new Level(map, name, this.goalPieces, this.babySpawn);
     }
 
     private createTilemap(levelJson: any):Tilemap {
