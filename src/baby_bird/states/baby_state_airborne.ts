@@ -13,7 +13,7 @@ class BabyAirborneState extends BabyBaseState
     }
 
     public onCollisionSolved(result: CollisionResult) {
-        if (Phaser.Geom.Rectangle.Overlaps(this.baby.hitbox, this.baby.mommy.bounceHitbox) && this.baby.speed.y > 0) {
+        if (Phaser.Geom.Rectangle.Overlaps(this.baby.hitbox, this.baby.mommy.bounceHitbox) && this.canBounceOnMommy()) {
             this.mommyBounce();
         }
         else if (result.onBottom) {
@@ -26,6 +26,10 @@ class BabyAirborneState extends BabyBaseState
                 this.baby.changeState(this.baby.walkState);
             }
         }
+    }
+
+    private canBounceOnMommy(): boolean {
+        return this.baby.speed.y > 0 && (this.baby.mommy.speed.y >= 0 || this.baby.mommy.isInGroundedState) && !this.baby.mommy.isFlying;
     }
 
     public mommyBounce() {

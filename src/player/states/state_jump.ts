@@ -33,6 +33,9 @@ class JumpState extends AirborneState
         if (this.player.speed.y >= 0) {
             this.player.changeState(this.player.fallState);
         }
+        else if (Phaser.Geom.Rectangle.Overlaps(this.player.baby.hitbox, this.player.bounceHitbox)) {
+            this.player.baby.momentumPushUp(-this.player.speed.y + 66);
+        }
     }
 
     public onCollisionSolved(result: CollisionResult) {

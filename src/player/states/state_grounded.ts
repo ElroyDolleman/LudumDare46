@@ -2,6 +2,7 @@ class GroundedState extends BaseState
 {
     constructor(player: Player) {
         super(player);
+        this.isGrouned = true;
     }
 
     public enter() {

@@ -82,6 +82,11 @@ class Baby extends Actor
         this.hitboxGraphics.fillRectShape(this.hitbox);
     }
 
+    public momentumPushUp(momentum: number) {
+        this.speed.y = -momentum;
+        this.changeState(this.airState);
+    }
+
     public getTarget() {
         return this.mommy;
     }

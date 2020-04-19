@@ -1,6 +1,7 @@
 class BaseState
 {
     protected player: Player;
+    public isGrouned:boolean = false;
 
     constructor(player: Player) {
         this.player = player;

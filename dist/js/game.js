@@ -175,6 +175,10 @@ var Baby = /** @class */ (function (_super) {
         this.hitboxGraphics.depth = 10;
         this.hitboxGraphics.fillRectShape(this.hitbox);
     };
+    Baby.prototype.momentumPushUp = function (momentum) {
+        this.speed.y = -momentum;
+        this.changeState(this.airState);
+    };
     Baby.prototype.getTarget = function () {
         return this.mommy;
     };
@@ -327,7 +331,7 @@ var BabyAirborneState = /** @class */ (function (_super) {
         this.updateGravity();
     };
     BabyAirborneState.prototype.onCollisionSolved = function (result) {
-        if (Phaser.Geom.Rectangle.Overlaps(this.baby.hitbox, this.baby.mommy.bounceHitbox) && this.baby.speed.y > 0) {
+        if (Phaser.Geom.Rectangle.Overlaps(this.baby.hitbox, this.baby.mommy.bounceHitbox) && this.canBounceOnMommy()) {
             this.mommyBounce();
         }
         else if (result.onBottom) {
@@ -340,6 +344,9 @@ var BabyAirborneState = /** @class */ (function (_super) {
                 this.baby.changeState(this.baby.walkState);
             }
         }
+    };
+    BabyAirborneState.prototype.canBounceOnMommy = function () {
+        return this.baby.speed.y > 0 && (this.baby.mommy.speed.y >= 0 || this.baby.mommy.isInGroundedState) && !this.baby.mommy.isFlying;
     };
     BabyAirborneState.prototype.mommyBounce = function () {
         this.baby.speed.y = -BabyStats.MommyBouncePower;
@@ -750,6 +757,18 @@ var Player = /** @class */ (function (_super) {
         configurable: true
     });
     ;
+    Object.defineProperty(Player.prototype, "isFlying", {
+        get: function () { return this.currentState == this.flyState; },
+        enumerable: true,
+        configurable: true
+    });
+    ;
+    Object.defineProperty(Player.prototype, "isInGroundedState", {
+        get: function () { return this.currentState.isGrouned; },
+        enumerable: true,
+        configurable: true
+    });
+    ;
     Player.prototype.createStates = function () {
         this.idleState = new IdleState(this);
         this.runState = new RunState(this);
@@ -865,6 +884,7 @@ var PlayerStats;
 })(PlayerStats || (PlayerStats = {}));
 var BaseState = /** @class */ (function () {
     function BaseState(player) {
+        this.isGrouned = false;
         this.player = player;
     }
     BaseState.prototype.enter = function () {
@@ -939,7 +959,9 @@ var AirborneState = /** @class */ (function (_super) {
 var GroundedState = /** @class */ (function (_super) {
     __extends(GroundedState, _super);
     function GroundedState(player) {
-        return _super.call(this, player) || this;
+        var _this = _super.call(this, player) || this;
+        _this.isGrouned = true;
+        return _this;
     }
     GroundedState.prototype.enter = function () {
     };
@@ -1133,6 +1155,9 @@ var JumpState = /** @class */ (function (_super) {
         this.updateGravity();
         if (this.player.speed.y >= 0) {
             this.player.changeState(this.player.fallState);
+        }
+        else if (Phaser.Geom.Rectangle.Overlaps(this.player.baby.hitbox, this.player.bounceHitbox)) {
+            this.player.baby.momentumPushUp(-this.player.speed.y + 66);
         }
     };
     JumpState.prototype.onCollisionSolved = function (result) {

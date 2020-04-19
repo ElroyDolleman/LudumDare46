@@ -28,6 +28,8 @@ class Player extends Actor
 
     public get isCrouching(): boolean { return this.currentState == this.crouchState; };
     public get isDead(): boolean { return this.currentState == this.deadState; };
+    public get isFlying(): boolean { return this.currentState == this.flyState; };
+    public get isInGroundedState(): boolean { return this.currentState.isGrouned; };
 
     constructor() {
         super(new Phaser.Geom.Rectangle(16, 262, 10, 10));
