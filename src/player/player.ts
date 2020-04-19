@@ -82,7 +82,24 @@ class Player extends Actor
     }
 
     public onCollisionSolved(result: CollisionResult) {
-        if (result.isCrushed) {
+        if (result.isDamaged) {
+            result.isDamaged = false;
+            for (let i = 0; i < result.tiles.length; i++) {
+                if (!result.tiles[i].canDamage) {
+                    continue;
+                }
+                if (result.tiles[i].spikeDirection.x == 0 || MathHelper.sign(this.speed.x) == 0 || MathHelper.sign(this.speed.x) != result.tiles[i].spikeDirection.x) {
+                    if (result.tiles[i].spikeDirection.y == 0 || MathHelper.sign(this.speed.y) == 0 || MathHelper.sign(this.speed.y) != result.tiles[i].spikeDirection.y) {
+                        if (result.tiles[i].canDamage && Phaser.Geom.Rectangle.Overlaps(this.hitbox, result.tiles[i].hitbox)) {
+                            result.isDamaged = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (result.isCrushed || result.isDamaged) {
             this.disappearDie();
             return;
         }

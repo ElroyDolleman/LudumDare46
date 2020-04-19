@@ -73,7 +73,7 @@
  </tile>
  <tile id="14">
   <properties>
-   <property name="tiletype" value=""/>
+   <property name="tiletype" value="spikes"/>
   </properties>
  </tile>
  <tile id="15">

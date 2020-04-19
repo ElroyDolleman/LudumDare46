@@ -26,6 +26,7 @@ for filename in os.listdir(directory):
     tile_id = -1
     tiles_solid = []
     tiles_semisolid = []
+    tiles_spikes = []
     tiles_onoff = {'switch_a':[], 'block_a':[], 'switch_b':[], 'block_b':[]}
     custom_hitboxes = {}
     for line in tileset_content.splitlines():
@@ -35,6 +36,8 @@ for filename in os.listdir(directory):
             tiles_solid.append(tile_id)
         elif '"tiletype"' in line and '"semisolid"' in line:
             tiles_semisolid.append(tile_id)
+        elif '"tiletype"' in line and '"spikes"' in line:
+            tiles_spikes.append(tile_id)
         elif 'hitbox' in line:
             custom_hitboxes[str(tile_id)] = {}
             if '"hitbox_height"' in line:
@@ -54,7 +57,8 @@ for filename in os.listdir(directory):
         'solidTiles': tiles_solid,
         'semisolidTiles': tiles_semisolid,
         'customHitboxes': custom_hitboxes,
-        'onoff': tiles_onoff
+        'onoff': tiles_onoff,
+        'spikes': tiles_spikes
     }
     json_ouput[filename.decode('utf-8').replace('.json', '')] = json_line
 

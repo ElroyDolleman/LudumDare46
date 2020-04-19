@@ -10,6 +10,7 @@ class CollisionResult
     prevRight: number = 0;
     prevBottom: number = 0;
     isCrushed: boolean = false;
+    isDamaged: boolean = false;
 }
 
 class CollisionManager
@@ -35,7 +36,11 @@ class CollisionManager
                 continue;
             }
             if (!tiles[i].isSolid) {
-                if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                if (tiles[i].canDamage) {
+                    result.isDamaged = true;
+                    continue;
+                }
+                else if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
                     tiles[i].triggerSwitch(actor);
                 }
                 continue;
@@ -56,6 +61,10 @@ class CollisionManager
                     continue;
                 }
             }
+            if (tiles[i].canDamage) {
+                result.isDamaged = true;
+                continue;
+            }
 
             if (actor.speed.x > 0) {
                 result.onRight = true;
@@ -73,7 +82,11 @@ class CollisionManager
                 continue;
             }
             if (!tiles[i].canStandOn) {
-                if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                if (tiles[i].canDamage) {
+                    result.isDamaged = true;
+                    continue;
+                }
+                else if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
                     tiles[i].triggerSwitch(actor);
                 }
                 continue;

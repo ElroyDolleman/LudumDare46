@@ -494,6 +494,9 @@ var Level = /** @class */ (function () {
     };
     return Level;
 }());
+var FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
+var FLIPPED_VERTICALLY_FLAG = 0x40000000;
+var FLIPPED_DIAGONALLY_FLAG = 0x20000000;
 var LevelLoader = /** @class */ (function () {
     function LevelLoader(scene) {
         this.scene = scene;
@@ -520,11 +523,17 @@ var LevelLoader = /** @class */ (function () {
             var y = row * TILE_HEIGHT;
             var width = TILE_WIDTH;
             var height = TILE_HEIGHT;
+            var rotation = 0;
             var sprite = null;
             var tiletype = TileTypes.Empty;
+            if (tileId >= FLIPPED_DIAGONALLY_FLAG) {
+                rotation = this.getRotation(tileId);
+                tileId &= ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG);
+            }
             if (tileId >= 0) {
-                sprite = this.scene.add.sprite(x, y, tilesetName, tileId);
-                sprite.setOrigin(0, 0);
+                sprite = this.scene.add.sprite(x + TILE_WIDTH / 2, y + TILE_WIDTH / 2, tilesetName, tileId);
+                sprite.setOrigin(0.5, 0.5);
+                sprite.setRotation(rotation);
                 tiletype = this.getTileType(levelJson, tileId);
                 if (tiletype != TileTypes.Empty) {
                     var hitboxData = levelJson['customHitboxes'][tileId.toString()];
@@ -543,6 +552,8 @@ var LevelLoader = /** @class */ (function () {
                 return TileTypes.Solid;
             case levelJson['semisolidTiles'].indexOf(tileId) >= 0:
                 return TileTypes.Semisolid;
+            case levelJson['spikes'].indexOf(tileId) >= 0:
+                return TileTypes.Spikes;
             case levelJson['onoff']['switch_a'].indexOf(tileId) >= 0:
             case levelJson['onoff']['switch_b'].indexOf(tileId) >= 0:
                 return TileTypes.OnOffSwitch;
@@ -554,6 +565,22 @@ var LevelLoader = /** @class */ (function () {
                 return TileTypes.Empty;
         }
     };
+    LevelLoader.prototype.getRotation = function (tileId) {
+        var flippedH = (tileId & FLIPPED_HORIZONTALLY_FLAG) > 0;
+        var flippedV = (tileId & FLIPPED_VERTICALLY_FLAG) > 0;
+        var flippedD = (tileId & FLIPPED_DIAGONALLY_FLAG) > 0;
+        if (!flippedH && flippedV && flippedD) {
+            return 1.5 * Math.PI; //270
+        }
+        else if (!flippedH && !flippedV && flippedD) {
+            return 0.5 * Math.PI; // 90
+        }
+        else if (flippedV && !flippedD) {
+            return Math.PI;
+        }
+        console.warn("the tileId is stored as if it has been rotated/flipped, but the code does not recognize it");
+        return 0;
+    };
     return LevelLoader;
 }());
 var TileTypes;
@@ -564,6 +591,7 @@ var TileTypes;
     TileTypes[TileTypes["OnOffSwitch"] = 3] = "OnOffSwitch";
     TileTypes[TileTypes["OnOffBlockA"] = 4] = "OnOffBlockA";
     TileTypes[TileTypes["OnOffBlockB"] = 5] = "OnOffBlockB";
+    TileTypes[TileTypes["Spikes"] = 6] = "Spikes";
 })(TileTypes || (TileTypes = {}));
 var Tile = /** @class */ (function () {
     function Tile(sprite, x, y, width, height, col, row, type) {
@@ -573,8 +601,13 @@ var Tile = /** @class */ (function () {
         this.column = col;
         this.row = row;
         this.type = type ? type : TileTypes.Empty;
-        this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xfa8900, alpha: 0.5 } });
-        //if (this.canStandOn) this.drawHitbox();
+        if (type == TileTypes.Spikes) {
+            this.setupSpikeHitbox(width, height);
+        }
+        // this.debugGraphics = Scenes.Current.add.graphics({ lineStyle: { width: 0 }, fillStyle: { color: 0xfa8900, alpha: 0.5 } });
+        // if (this.canStandOn || this.canDamage) {
+        //     this.drawHitbox();
+        // }
         if (this.isEffectedByOnOffState) {
             OnOffState.StateEvents.addListener('switched', this.onOnOffStateChanged, this);
         }
@@ -601,6 +634,11 @@ var Tile = /** @class */ (function () {
     });
     Object.defineProperty(Tile.prototype, "canStandOn", {
         get: function () { return this.isSolid || this.isSemisolid; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Tile.prototype, "canDamage", {
+        get: function () { return this.type == TileTypes.Spikes; },
         enumerable: true,
         configurable: true
     });
@@ -631,6 +669,32 @@ var Tile = /** @class */ (function () {
         if (actor.currentSwitch == null) {
             OnOffState.SwitchState();
             actor.currentSwitch = this;
+        }
+    };
+    Tile.prototype.setupSpikeHitbox = function (width, height) {
+        var degree = Phaser.Math.RadToDeg(this.sprite.rotation);
+        switch (degree) {
+            case -90:
+            case 270:
+                this.hitbox.x += width - 5;
+                this.hitbox.width = 5;
+                this.spikeDirection = new Phaser.Geom.Point(-1, 0);
+                break;
+            case 90:
+            case -270:
+                this.hitbox.width = 5;
+                this.spikeDirection = new Phaser.Geom.Point(1, 0);
+                break;
+            case 180:
+            case -180:
+                this.hitbox.height = 5;
+                this.spikeDirection = new Phaser.Geom.Point(0, 1);
+                break;
+            default:
+                this.hitbox.y += height - 5;
+                this.hitbox.height = 5;
+                this.spikeDirection = new Phaser.Geom.Point(0, -1);
+                break;
         }
     };
     Tile.prototype.onOnOffStateChanged = function () {
@@ -800,7 +864,23 @@ var Player = /** @class */ (function (_super) {
         this.animator.squish(1, 0.75, 300);
     };
     Player.prototype.onCollisionSolved = function (result) {
-        if (result.isCrushed) {
+        if (result.isDamaged) {
+            result.isDamaged = false;
+            for (var i = 0; i < result.tiles.length; i++) {
+                if (!result.tiles[i].canDamage) {
+                    continue;
+                }
+                if (result.tiles[i].spikeDirection.x == 0 || MathHelper.sign(this.speed.x) == 0 || MathHelper.sign(this.speed.x) != result.tiles[i].spikeDirection.x) {
+                    if (result.tiles[i].spikeDirection.y == 0 || MathHelper.sign(this.speed.y) == 0 || MathHelper.sign(this.speed.y) != result.tiles[i].spikeDirection.y) {
+                        if (result.tiles[i].canDamage && Phaser.Geom.Rectangle.Overlaps(this.hitbox, result.tiles[i].hitbox)) {
+                            result.isDamaged = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (result.isCrushed || result.isDamaged) {
             this.disappearDie();
             return;
         }
@@ -1259,6 +1339,7 @@ var CollisionResult = /** @class */ (function () {
         this.prevRight = 0;
         this.prevBottom = 0;
         this.isCrushed = false;
+        this.isDamaged = false;
     }
     return CollisionResult;
 }());
@@ -1279,7 +1360,11 @@ var CollisionManager = /** @class */ (function () {
                 continue;
             }
             if (!tiles[i].isSolid) {
-                if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                if (tiles[i].canDamage) {
+                    result.isDamaged = true;
+                    continue;
+                }
+                else if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
                     tiles[i].triggerSwitch(actor);
                 }
                 continue;
@@ -1300,6 +1385,10 @@ var CollisionManager = /** @class */ (function () {
                     continue;
                 }
             }
+            if (tiles[i].canDamage) {
+                result.isDamaged = true;
+                continue;
+            }
             if (actor.speed.x > 0) {
                 result.onRight = true;
                 actor.hitbox.x = tiles[i].hitbox.x - actor.hitbox.width;
@@ -1315,7 +1404,11 @@ var CollisionManager = /** @class */ (function () {
                 continue;
             }
             if (!tiles[i].canStandOn) {
-                if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
+                if (tiles[i].canDamage) {
+                    result.isDamaged = true;
+                    continue;
+                }
+                else if (actor.canTriggerOnOffSwitch && tiles[i].isOnOffSwitch) {
                     tiles[i].triggerSwitch(actor);
                 }
                 continue;
