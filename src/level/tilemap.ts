@@ -32,6 +32,9 @@ class Tilemap {
         }
         return tiles;
     }
+    public getTileNextTo(tile:Tile, x:number, y:number):Tile {
+        return this.getTile(tile.column + x, tile.row + y);
+    }
     public worldToTile(x:number, y:number):Tile {
         return this.getTile(this.toColumn(x), this.toRow(y));
     }

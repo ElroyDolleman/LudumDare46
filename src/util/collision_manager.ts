@@ -9,6 +9,7 @@ class CollisionResult
     prevLeft: number = 0;
     prevRight: number = 0;
     prevBottom: number = 0;
+    isCrushed: boolean = false;
 }
 
 class CollisionManager
@@ -40,6 +41,22 @@ class CollisionManager
                     }
                     continue;
                 }
+                if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
+                    if (actor.hitbox.left < tiles[i].hitbox.left && !this.currentLevel.map.getTileNextTo(tiles[i], -1, 0).isSolid) {
+                        result.onRight = true;
+                        actor.hitbox.x = tiles[i].hitbox.x - actor.hitbox.width;
+                        continue;
+                    }
+                    else if (actor.hitbox.right > tiles[i].hitbox.right && !this.currentLevel.map.getTileNextTo(tiles[i], 1, 0).isSolid) {
+                        result.onLeft = true;
+                        actor.hitbox.x = tiles[i].hitbox.right;
+                        continue;
+                    }
+                    else {
+                        result.isCrushed = true;
+                        continue;
+                    }
+                }
 
                 if (actor.speed.x > 0) {
                     result.onRight = true;
@@ -70,6 +87,22 @@ class CollisionManager
                         actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
                     }
                     continue;
+                }
+                if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
+                    if (actor.hitbox.top < tiles[i].hitbox.top && !this.currentLevel.map.getTileNextTo(tiles[i], 0, -1).isSolid) {
+                        result.onBottom = true;
+                        actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
+                        continue;
+                    }
+                    else if (actor.hitbox.bottom > tiles[i].hitbox.bottom && !this.currentLevel.map.getTileNextTo(tiles[i], 0, 1).isSolid) {
+                        result.onTop = true;
+                        actor.hitbox.y = tiles[i].hitbox.bottom;
+                        continue;
+                    }
+                    else {
+                        result.isCrushed = true;
+                        continue;
+                    }
                 }
 
                 if (actor.speed.y > 0) {

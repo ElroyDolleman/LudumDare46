@@ -29,6 +29,10 @@ class PlayerAnimator extends Animator
         super.update();
     }
 
+    public updatePosition() {
+        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
+    }
+
     public changeAnimation(animation: any) {
         super.changeAnimation(animation.key, animation.isSingleFrame);
     }

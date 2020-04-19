@@ -26,7 +26,7 @@ class Animator
         }
     }
     public updatePosition() {
-        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
+        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.centerY);
     }
 
     public changeAnimation(key: string, isSingleFrame: boolean = false) {
@@ -42,7 +42,7 @@ class Animator
     public setTimeScale(timeScale: number) {
         this.sprite.anims.setTimeScale(timeScale);
     }
-    protected createAnimation(key: string, texture: string, prefix: string, length: number, frameRate: number = 16, repeat: number = -1) {
+    public createAnimation(key: string, texture: string, prefix: string, length: number, frameRate: number = 16, repeat: number = -1) {
         let frameNames = Scenes.Current.anims.generateFrameNames(texture, { 
             prefix: prefix,
             suffix: '.png',

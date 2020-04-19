@@ -12,6 +12,7 @@ class PlaygroundScene extends Phaser.Scene {
 
     preload() {
         this.load.atlas('player', 'assets/player.png', 'assets/player.json');
+        this.load.atlas('effects', 'assets/effects.png', 'assets/effects.json');
         this.load.spritesheet('tileset', 'assets/tileset.png', { frameWidth: TILE_WIDTH, frameHeight: TILE_HEIGHT });
         this.levelLoader.preloadJsonFiles();
     }

@@ -3,6 +3,7 @@ module OnOffState
     export let CurrentOnType: TileTypes = TileTypes.OnOffBlockA;
     export let CurrentOffType: TileTypes = TileTypes.OnOffBlockB;
     export let StateEvents: Phaser.Events.EventEmitter = new Phaser.Events.EventEmitter();
+    export let StateJustChanged: boolean = false;
 
     export function SwitchState() {
         if (CurrentOnType == TileTypes.OnOffBlockA) {
@@ -13,7 +14,12 @@ module OnOffState
             CurrentOnType = TileTypes.OnOffBlockA;
             CurrentOffType = TileTypes.OnOffBlockB;
         }
+
         StateEvents.emit('switched');
+
+        // Set true for 1 frame
+        StateJustChanged = true;
+        setTimeout(() => { StateJustChanged = false; }, 0);
     }
 
     export function ForceState(state: TileTypes) {

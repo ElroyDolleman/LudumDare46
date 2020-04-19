@@ -6,6 +6,7 @@ class YellState extends GroundedState
     
     public enter() {
         this.player.animator.changeAnimation(PlayerAnimations.Yell);
+        this.player.baby.disappearDie();
     }
 
     public update() {

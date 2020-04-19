@@ -3,6 +3,7 @@ class Baby extends Actor
 {
     public mommy: Player;
     public animator: BabyAnimator;
+    public poofEffect: Animator;
 
     private hitboxGraphics: Phaser.GameObjects.Graphics;
 
@@ -20,6 +21,9 @@ class Baby extends Actor
         this.canTriggerOnOffSwitch = true;
 
         this.animator = new BabyAnimator(this);
+        this.poofEffect = new Animator(Scenes.Current.add.sprite(0, 0, 'effects', 'poof_00.png'), this);
+        this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 20, 0);
+        this.poofEffect.sprite.setVisible(false);
 
         this.createStates();
         this.changeState(this.walkState);
@@ -37,6 +41,10 @@ class Baby extends Actor
     public update() {
         this.currentState.update();
         this.animator.update();
+
+        if (this.poofEffect.sprite.visible && !this.poofEffect.sprite.anims.isPlaying) {
+            this.poofEffect.sprite.setVisible(false);
+        }
     }
 
     public changeState(newState: BabyBaseState) {
@@ -57,6 +65,10 @@ class Baby extends Actor
     }
 
     public onCollisionSolved(result: CollisionResult) {
+        if (result.isCrushed) {
+            this.disappearDie();
+            return;
+        }
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
 
@@ -71,5 +83,13 @@ class Baby extends Actor
 
     public getTarget() {
         return this.mommy;
+    }
+
+    public disappearDie() {
+        this.deadState.hideBabyOnDeath = true;
+        this.changeState(this.deadState);
+        this.poofEffect.sprite.setVisible(true);
+        this.poofEffect.updatePosition();
+        this.poofEffect.changeAnimation('poof');
     }
 }

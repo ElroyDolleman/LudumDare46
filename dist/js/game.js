@@ -21,6 +21,7 @@ var PlaygroundScene = /** @class */ (function (_super) {
     };
     PlaygroundScene.prototype.preload = function () {
         this.load.atlas('player', 'assets/player.png', 'assets/player.json');
+        this.load.atlas('effects', 'assets/effects.png', 'assets/effects.json');
         this.load.spritesheet('tileset', 'assets/tileset.png', { frameWidth: TILE_WIDTH, frameHeight: TILE_HEIGHT });
         this.levelLoader.preloadJsonFiles();
     };
@@ -105,6 +106,9 @@ var Baby = /** @class */ (function (_super) {
         _this.mommy = mommy;
         _this.canTriggerOnOffSwitch = true;
         _this.animator = new BabyAnimator(_this);
+        _this.poofEffect = new Animator(Scenes.Current.add.sprite(0, 0, 'effects', 'poof_00.png'), _this);
+        _this.poofEffect.createAnimation('poof', 'effects', 'poof_', 6, 20, 0);
+        _this.poofEffect.sprite.setVisible(false);
         _this.createStates();
         _this.changeState(_this.walkState);
         return _this;
@@ -124,6 +128,9 @@ var Baby = /** @class */ (function (_super) {
     Baby.prototype.update = function () {
         this.currentState.update();
         this.animator.update();
+        if (this.poofEffect.sprite.visible && !this.poofEffect.sprite.anims.isPlaying) {
+            this.poofEffect.sprite.setVisible(false);
+        }
     };
     Baby.prototype.changeState = function (newState) {
         this.currentState = newState;
@@ -143,6 +150,10 @@ var Baby = /** @class */ (function (_super) {
         }
     };
     Baby.prototype.onCollisionSolved = function (result) {
+        if (result.isCrushed) {
+            this.disappearDie();
+            return;
+        }
         this.currentState.onCollisionSolved(result);
         this.animator.updatePosition();
         //this.drawHitbox();
@@ -154,6 +165,13 @@ var Baby = /** @class */ (function (_super) {
     };
     Baby.prototype.getTarget = function () {
         return this.mommy;
+    };
+    Baby.prototype.disappearDie = function () {
+        this.deadState.hideBabyOnDeath = true;
+        this.changeState(this.deadState);
+        this.poofEffect.sprite.setVisible(true);
+        this.poofEffect.updatePosition();
+        this.poofEffect.changeAnimation('poof');
     };
     return Baby;
 }(Actor));
@@ -186,7 +204,7 @@ var Animator = /** @class */ (function () {
         }
     };
     Animator.prototype.updatePosition = function () {
-        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
+        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.centerY);
     };
     Animator.prototype.changeAnimation = function (key, isSingleFrame) {
         if (isSingleFrame === void 0) { isSingleFrame = false; }
@@ -247,7 +265,7 @@ var Animator = /** @class */ (function () {
 var BabyAnimator = /** @class */ (function (_super) {
     __extends(BabyAnimator, _super);
     function BabyAnimator(baby) {
-        var _this = _super.call(this, Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key), baby) || this;
+        var _this = _super.call(this, Scenes.Current.add.sprite(0, 0, 'player', 'babybird_walk_00.png'), baby) || this;
         _this.sprite.setOrigin(0.5, 1);
         _this.updatePosition();
         _this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);
@@ -357,11 +375,20 @@ var BabyGroundedState = /** @class */ (function (_super) {
 var BabyDeadState = /** @class */ (function (_super) {
     __extends(BabyDeadState, _super);
     function BabyDeadState(baby) {
-        return _super.call(this, baby) || this;
+        var _this = _super.call(this, baby) || this;
+        _this.hideBabyOnDeath = false;
+        return _this;
     }
     BabyDeadState.prototype.enter = function () {
-        this.baby.animator.changeAnimation('dead');
-        this.baby.speed.x = 0;
+        if (this.hideBabyOnDeath) {
+            this.baby.animator.sprite.setVisible(false);
+            this.baby.speed.x = 0;
+            this.baby.speed.y = 0;
+        }
+        else {
+            this.baby.animator.changeAnimation('dead');
+            this.baby.speed.x = 0;
+        }
     };
     BabyDeadState.prototype.update = function () {
     };
@@ -515,6 +542,7 @@ var TileTypes;
 })(TileTypes || (TileTypes = {}));
 var Tile = /** @class */ (function () {
     function Tile(sprite, x, y, width, height, col, row, type) {
+        this.switchJustTriggered = false;
         this.sprite = sprite;
         this.hitbox = new Phaser.Geom.Rectangle(x, y, width, height);
         this.column = col;
@@ -625,6 +653,9 @@ var Tilemap = /** @class */ (function () {
             }
         }
         return tiles;
+    };
+    Tilemap.prototype.getTileNextTo = function (tile, x, y) {
+        return this.getTile(tile.column + x, tile.row + y);
     };
     Tilemap.prototype.worldToTile = function (x, y) {
         return this.getTile(this.toColumn(x), this.toRow(y));
@@ -760,6 +791,9 @@ var PlayerAnimator = /** @class */ (function (_super) {
     }
     PlayerAnimator.prototype.update = function () {
         _super.prototype.update.call(this);
+    };
+    PlayerAnimator.prototype.updatePosition = function () {
+        this.sprite.setPosition(this.actor.hitbox.centerX, this.actor.hitbox.bottom);
     };
     PlayerAnimator.prototype.changeAnimation = function (animation) {
         _super.prototype.changeAnimation.call(this, animation.key, animation.isSingleFrame);
@@ -1102,6 +1136,7 @@ var YellState = /** @class */ (function (_super) {
     }
     YellState.prototype.enter = function () {
         this.player.animator.changeAnimation(PlayerAnimations.Yell);
+        this.player.baby.disappearDie();
     };
     YellState.prototype.update = function () {
         if (!this.player.animator.sprite.anims.isPlaying) {
@@ -1127,6 +1162,7 @@ var CollisionResult = /** @class */ (function () {
         this.prevLeft = 0;
         this.prevRight = 0;
         this.prevBottom = 0;
+        this.isCrushed = false;
     }
     return CollisionResult;
 }());
@@ -1152,6 +1188,22 @@ var CollisionManager = /** @class */ (function () {
                         tiles[i].triggerSwitch(actor);
                     }
                     continue;
+                }
+                if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
+                    if (actor.hitbox.left < tiles[i].hitbox.left && !this.currentLevel.map.getTileNextTo(tiles[i], -1, 0).isSolid) {
+                        result.onRight = true;
+                        actor.hitbox.x = tiles[i].hitbox.x - actor.hitbox.width;
+                        continue;
+                    }
+                    else if (actor.hitbox.right > tiles[i].hitbox.right && !this.currentLevel.map.getTileNextTo(tiles[i], 1, 0).isSolid) {
+                        result.onLeft = true;
+                        actor.hitbox.x = tiles[i].hitbox.right;
+                        continue;
+                    }
+                    else {
+                        result.isCrushed = true;
+                        continue;
+                    }
                 }
                 if (actor.speed.x > 0) {
                     result.onRight = true;
@@ -1181,6 +1233,22 @@ var CollisionManager = /** @class */ (function () {
                         actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
                     }
                     continue;
+                }
+                if (tiles[i].isOnOffBlock && OnOffState.StateJustChanged) {
+                    if (actor.hitbox.top < tiles[i].hitbox.top && !this.currentLevel.map.getTileNextTo(tiles[i], 0, -1).isSolid) {
+                        result.onBottom = true;
+                        actor.hitbox.y = tiles[i].hitbox.y - actor.hitbox.height;
+                        continue;
+                    }
+                    else if (actor.hitbox.bottom > tiles[i].hitbox.bottom && !this.currentLevel.map.getTileNextTo(tiles[i], 0, 1).isSolid) {
+                        result.onTop = true;
+                        actor.hitbox.y = tiles[i].hitbox.bottom;
+                        continue;
+                    }
+                    else {
+                        result.isCrushed = true;
+                        continue;
+                    }
                 }
                 if (actor.speed.y > 0) {
                     result.onBottom = true;
@@ -1282,6 +1350,7 @@ var OnOffState;
     OnOffState.CurrentOnType = TileTypes.OnOffBlockA;
     OnOffState.CurrentOffType = TileTypes.OnOffBlockB;
     OnOffState.StateEvents = new Phaser.Events.EventEmitter();
+    OnOffState.StateJustChanged = false;
     function SwitchState() {
         if (OnOffState.CurrentOnType == TileTypes.OnOffBlockA) {
             OnOffState.CurrentOnType = TileTypes.OnOffBlockB;
@@ -1292,6 +1361,9 @@ var OnOffState;
             OnOffState.CurrentOffType = TileTypes.OnOffBlockB;
         }
         OnOffState.StateEvents.emit('switched');
+        // Set true for 1 frame
+        OnOffState.StateJustChanged = true;
+        setTimeout(function () { OnOffState.StateJustChanged = false; }, 0);
     }
     OnOffState.SwitchState = SwitchState;
     function ForceState(state) {

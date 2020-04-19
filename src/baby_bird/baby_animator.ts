@@ -2,7 +2,7 @@
 class BabyAnimator extends Animator
 {
     constructor(baby: Baby) {
-        super(Scenes.Current.add.sprite(0, 0, 'player', PlayerAnimations.Idle.key), baby);
+        super(Scenes.Current.add.sprite(0, 0, 'player', 'babybird_walk_00.png'), baby);
         this.sprite.setOrigin(0.5, 1);
         this.updatePosition();
 

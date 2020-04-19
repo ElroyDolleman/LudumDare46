@@ -16,6 +16,7 @@ class Tile {
     public type:TileTypes;
 
     private debugGraphics: Phaser.GameObjects.Graphics;
+    public switchJustTriggered: boolean = false;
 
     public get position():Phaser.Geom.Point { return new Phaser.Geom.Point(this.hitbox.x, this.hitbox.y) }
     
