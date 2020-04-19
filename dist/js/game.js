@@ -24,7 +24,7 @@ var GameScene = /** @class */ (function (_super) {
     function GameScene() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.prevOnState = OnOffState.CurrentOnType;
-        _this.currentLevelNumber = 4;
+        _this.currentLevelNumber = 1;
         return _this;
     }
     Object.defineProperty(GameScene.prototype, "currentLevelName", {
@@ -101,7 +101,7 @@ var GameScene = /** @class */ (function (_super) {
         }
     };
     GameScene.prototype.nextLevel = function () {
-        if (this.currentLevelNumber >= 4) {
+        if (this.currentLevelNumber >= 6) {
             console.log("END OF GAME");
             return;
         }
@@ -133,7 +133,7 @@ var config = {
     pixelArt: true,
     backgroundColor: '#3CBCFC',
     title: "Ludum Dare 46",
-    version: "0.0.1",
+    version: "0.1.0",
     disableContextMenu: true,
     scene: [GameScene],
 };
@@ -377,7 +377,7 @@ var BabyAnimator = /** @class */ (function (_super) {
         _this.sprite.setOrigin(0.5, 1);
         _this.updatePosition();
         _this.createAnimation('walk', 'player', 'babybird_walk_', 2, 6);
-        _this.createAnimation('dead', 'player', 'babybird_die_', 3, 20, 0);
+        _this.createAnimation('dead', 'player', 'babybird_die_', 3, 26, 0);
         _this.changeAnimation('walk');
         return _this;
     }
@@ -768,6 +768,7 @@ var TileTypes;
 var Tile = /** @class */ (function () {
     function Tile(sprite, x, y, width, height, col, row, type) {
         this.switchJustTriggered = false;
+        this.cannotTriggerSwitch = false;
         this.sprite = sprite;
         this.hitbox = new Phaser.Geom.Rectangle(x, y, width, height);
         this.column = col;
@@ -838,9 +839,17 @@ var Tile = /** @class */ (function () {
         this.debugGraphics.clear();
     };
     Tile.prototype.triggerSwitch = function (actor) {
+        var _this = this;
         if (actor.currentSwitch == null) {
-            OnOffState.SwitchState();
             actor.currentSwitch = this;
+            if (!this.cannotTriggerSwitch) {
+                OnOffState.SwitchState();
+                this.cannotTriggerSwitch = true;
+                setTimeout(function () {
+                    if (_this)
+                        _this.cannotTriggerSwitch = false;
+                }, 666);
+            }
         }
     };
     Tile.prototype.setupSpikeHitbox = function (width, height) {

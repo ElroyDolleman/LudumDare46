@@ -21,6 +21,7 @@ class Tile {
     public switchJustTriggered: boolean = false;
 
     public spikeDirection: Phaser.Geom.Point;
+    public cannotTriggerSwitch: boolean = false;
 
     public get position():Phaser.Geom.Point { return new Phaser.Geom.Point(this.hitbox.x, this.hitbox.y) }
     
@@ -66,8 +67,14 @@ class Tile {
 
     public triggerSwitch(actor: Actor) {
         if (actor.currentSwitch == null) {
-            OnOffState.SwitchState();
             actor.currentSwitch = this;
+            if (!this.cannotTriggerSwitch) {
+                OnOffState.SwitchState();
+                this.cannotTriggerSwitch = true;
+                setTimeout(() => {
+                    if (this) this.cannotTriggerSwitch = false;
+                }, 666);
+            }
         }
     }
 

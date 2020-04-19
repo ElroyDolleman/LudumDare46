@@ -8,7 +8,7 @@ let config = {
     pixelArt: true,
     backgroundColor: '#3CBCFC',
     title: "Ludum Dare 46",
-    version: "0.0.1",
+    version: "0.1.0",
     disableContextMenu: true,
     scene: [ GameScene ],
 };
