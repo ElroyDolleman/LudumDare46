@@ -1,4 +1,5 @@
 enum LevelStates {
+    Prepare,
     Playing,
     Pause,
     Lost,
@@ -9,12 +10,16 @@ class GameScene extends Phaser.Scene {
 
     public player: Player;
     public baby: Baby;
-    public levelLoader: LevelLoader;
-    public level: Level;
+    
     public inputManager: InputManager;
     public prevOnState = OnOffState.CurrentOnType;
 
+    public levelLoader: LevelLoader;
     public levelState: LevelStates;
+    public level: Level;
+    public currentLevelNumber = 1;
+
+    public get currentLevelName(): string { return 'level' + ('0' + this.currentLevelNumber).slice(-2); }
 
     init() {
         this.levelLoader = new LevelLoader(this);
@@ -31,7 +36,7 @@ class GameScene extends Phaser.Scene {
         Scenes.Current = this;
 
         this.inputManager = new InputManager(this);
-        this.createLevel('level02');
+        this.createLevel(this.currentLevelName);
     }
 
     createLevel(levelName: string) {
@@ -44,18 +49,26 @@ class GameScene extends Phaser.Scene {
         this.player.x = this.level.goalPos.x - this.player.hitbox.width / 2;
         this.player.y = this.level.goalPos.y - this.player.hitbox.height;
         this.player.animator.facingDirection = MathHelper.sign(this.baby.x - this.player.x);
+        this.player.animator.updatePosition();
         this.baby.x = this.level.babySpawn.x;
-        this.baby.y = this.level.babySpawn.y;
+        this.baby.y = this.level.babySpawn.y + 3;
+        this.baby.animator.updatePosition();
 
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
 
-        this.levelState = LevelStates.Playing;
+        this.levelState = LevelStates.Prepare;
     }
 
     update(time: number, delta: number) {
         if (this.levelState == LevelStates.Pause) {
             return;
+        }
+        if (this.levelState == LevelStates.Prepare) {
+            if (this.inputManager.anyKeyDown) {
+                this.levelState = LevelStates.Playing;
+            }
+            else return;
         }
 
         this.prevOnState = OnOffState.CurrentOnType;
@@ -83,9 +96,19 @@ class GameScene extends Phaser.Scene {
         else if (this.player.hasWon && this.levelState != LevelStates.Win) {
             this.levelState = LevelStates.Win;
             setTimeout(() => {
-                this.reset();
+                this.nextLevel();
             }, 2700);
         }
+    }
+
+    nextLevel() {
+        if (this.currentLevelNumber == 3) {
+            console.log("END OF GAME");
+            return;
+        }
+        this.currentLevelNumber++;
+        this.destroy();
+        this.createLevel(this.currentLevelName);
     }
 
     reset() {

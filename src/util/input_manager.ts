@@ -12,6 +12,10 @@ module Inputs
 
 class InputManager
 {
+    public get anyKeyDown(): boolean {
+        return Inputs.Up.isDown || Inputs.Left.isDown || Inputs.Down.isDown || Inputs.Right.isDown || Inputs.Yell.isDown || Inputs.Crouch.isDown || Inputs.Jump.key.isDown;
+    }
+
     public constructor(scene: Phaser.Scene) {
         Inputs.Up = scene.input.keyboard.addKey('up');
         Inputs.Left = scene.input.keyboard.addKey('left');

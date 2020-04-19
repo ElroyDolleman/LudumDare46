@@ -34,21 +34,23 @@ class Level
         this.collidableActors.forEach(actor => {
             let result = this.collisionManager.moveActor(actor);
 
-            this.goalPieces.every((tile) => {
-                if (Phaser.Geom.Rectangle.Overlaps(actor.hitbox, tile.hitbox) || actor.hitbox.bottom == tile.hitbox.top) {
+            for (let i = 0; i < this.goalPieces.length; i++) {
+                if (Phaser.Geom.Rectangle.Overlaps(actor.hitbox, this.goalPieces[i].hitbox) 
+                || (actor.hitbox.bottom == this.goalPieces[i].hitbox.top && actor.hitbox.right > this.goalPieces[i].hitbox.left && actor.hitbox.left < this.goalPieces[i].hitbox.right)) {
+
                     actor.isTouchingGoal = true;
-                    actor.goalTile = tile;
-                    return false;
+                    actor.goalTile = this.goalPieces[i];
+                    break;
                 }
                 else {
                     actor.isTouchingGoal = false;
                     actor.goalTile = null;
                 }
-            });
+            }
 
             // this.map.clearHitboxDrawings();
-            // for (let i = 0; i < result.tiles.length; i++) {
-            //     result.tiles[i].drawHitbox()
+            // for (let i = 0; i < result.this.goalPieces[i]s.length; i++) {
+            //     result.this.goalPieces[i]s[i].drawHitbox()
             // }
         });
     }

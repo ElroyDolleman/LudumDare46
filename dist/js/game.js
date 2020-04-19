@@ -13,18 +13,25 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var LevelStates;
 (function (LevelStates) {
-    LevelStates[LevelStates["Playing"] = 0] = "Playing";
-    LevelStates[LevelStates["Pause"] = 1] = "Pause";
-    LevelStates[LevelStates["Lost"] = 2] = "Lost";
-    LevelStates[LevelStates["Win"] = 3] = "Win";
+    LevelStates[LevelStates["Prepare"] = 0] = "Prepare";
+    LevelStates[LevelStates["Playing"] = 1] = "Playing";
+    LevelStates[LevelStates["Pause"] = 2] = "Pause";
+    LevelStates[LevelStates["Lost"] = 3] = "Lost";
+    LevelStates[LevelStates["Win"] = 4] = "Win";
 })(LevelStates || (LevelStates = {}));
 var GameScene = /** @class */ (function (_super) {
     __extends(GameScene, _super);
     function GameScene() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.prevOnState = OnOffState.CurrentOnType;
+        _this.currentLevelNumber = 1;
         return _this;
     }
+    Object.defineProperty(GameScene.prototype, "currentLevelName", {
+        get: function () { return 'level' + ('0' + this.currentLevelNumber).slice(-2); },
+        enumerable: true,
+        configurable: true
+    });
     GameScene.prototype.init = function () {
         this.levelLoader = new LevelLoader(this);
     };
@@ -37,7 +44,7 @@ var GameScene = /** @class */ (function (_super) {
     GameScene.prototype.create = function () {
         Scenes.Current = this;
         this.inputManager = new InputManager(this);
-        this.createLevel('level02');
+        this.createLevel(this.currentLevelName);
     };
     GameScene.prototype.createLevel = function (levelName) {
         this.level = this.levelLoader.load(levelName);
@@ -48,16 +55,25 @@ var GameScene = /** @class */ (function (_super) {
         this.player.x = this.level.goalPos.x - this.player.hitbox.width / 2;
         this.player.y = this.level.goalPos.y - this.player.hitbox.height;
         this.player.animator.facingDirection = MathHelper.sign(this.baby.x - this.player.x);
+        this.player.animator.updatePosition();
         this.baby.x = this.level.babySpawn.x;
-        this.baby.y = this.level.babySpawn.y;
+        this.baby.y = this.level.babySpawn.y + 3;
+        this.baby.animator.updatePosition();
         this.level.collidableActors.push(this.player);
         this.level.collidableActors.push(this.baby);
-        this.levelState = LevelStates.Playing;
+        this.levelState = LevelStates.Prepare;
     };
     GameScene.prototype.update = function (time, delta) {
         var _this = this;
         if (this.levelState == LevelStates.Pause) {
             return;
+        }
+        if (this.levelState == LevelStates.Prepare) {
+            if (this.inputManager.anyKeyDown) {
+                this.levelState = LevelStates.Playing;
+            }
+            else
+                return;
         }
         this.prevOnState = OnOffState.CurrentOnType;
         this.inputManager.update();
@@ -80,9 +96,18 @@ var GameScene = /** @class */ (function (_super) {
         else if (this.player.hasWon && this.levelState != LevelStates.Win) {
             this.levelState = LevelStates.Win;
             setTimeout(function () {
-                _this.reset();
+                _this.nextLevel();
             }, 2700);
         }
+    };
+    GameScene.prototype.nextLevel = function () {
+        if (this.currentLevelNumber == 3) {
+            console.log("END OF GAME");
+            return;
+        }
+        this.currentLevelNumber++;
+        this.destroy();
+        this.createLevel(this.currentLevelName);
     };
     GameScene.prototype.reset = function () {
         var name = this.level.name;
@@ -370,7 +395,7 @@ var BabyStats;
     BabyStats.DefaultWalkSpeed = 32;
     BabyStats.DefaultGravity = 12;
     BabyStats.DefaultMaxFallSpeed = 320;
-    BabyStats.DefaultWaitingTime = 1000;
+    BabyStats.DefaultWaitingTime = 100;
     BabyStats.MommyBouncePower = 168;
     BabyStats.DeadFallSpeed = 300;
     BabyStats.JumpInGoalPower = 96;
@@ -593,20 +618,21 @@ var Level = /** @class */ (function () {
         var _this = this;
         this.collidableActors.forEach(function (actor) {
             var result = _this.collisionManager.moveActor(actor);
-            _this.goalPieces.every(function (tile) {
-                if (Phaser.Geom.Rectangle.Overlaps(actor.hitbox, tile.hitbox) || actor.hitbox.bottom == tile.hitbox.top) {
+            for (var i = 0; i < _this.goalPieces.length; i++) {
+                if (Phaser.Geom.Rectangle.Overlaps(actor.hitbox, _this.goalPieces[i].hitbox)
+                    || (actor.hitbox.bottom == _this.goalPieces[i].hitbox.top && actor.hitbox.right > _this.goalPieces[i].hitbox.left && actor.hitbox.left < _this.goalPieces[i].hitbox.right)) {
                     actor.isTouchingGoal = true;
-                    actor.goalTile = tile;
-                    return false;
+                    actor.goalTile = _this.goalPieces[i];
+                    break;
                 }
                 else {
                     actor.isTouchingGoal = false;
                     actor.goalTile = null;
                 }
-            });
+            }
             // this.map.clearHitboxDrawings();
-            // for (let i = 0; i < result.tiles.length; i++) {
-            //     result.tiles[i].drawHitbox()
+            // for (let i = 0; i < result.this.goalPieces[i]s.length; i++) {
+            //     result.this.goalPieces[i]s[i].drawHitbox()
             // }
         });
     };
@@ -1728,6 +1754,13 @@ var InputManager = /** @class */ (function () {
         Inputs.Yell = scene.input.keyboard.addKey('x');
         Inputs.Jump = { key: scene.input.keyboard.addKey('z'), heldDownFrames: 0 };
     }
+    Object.defineProperty(InputManager.prototype, "anyKeyDown", {
+        get: function () {
+            return Inputs.Up.isDown || Inputs.Left.isDown || Inputs.Down.isDown || Inputs.Right.isDown || Inputs.Yell.isDown || Inputs.Crouch.isDown || Inputs.Jump.key.isDown;
+        },
+        enumerable: true,
+        configurable: true
+    });
     InputManager.prototype.update = function () {
         if (Inputs.Jump.key.isDown) {
             Inputs.Jump.heldDownFrames++;
