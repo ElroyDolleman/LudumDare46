@@ -80,6 +80,7 @@ var GameScene = /** @class */ (function (_super) {
     };
     GameScene.prototype.update = function (time, delta) {
         var _this = this;
+        GameTime.currentElapsedMS = delta;
         if (this.levelState == LevelStates.Pause || this.levelState == LevelStates.EndOfGame) {
             return;
         }
@@ -130,8 +131,7 @@ var GameScene = /** @class */ (function (_super) {
         }
     };
     GameScene.prototype.nextLevel = function () {
-        if (this.currentLevelNumber >= 1) {
-            console.log("END OF GAME");
+        if (this.currentLevelNumber >= 8) {
             endScreen.show();
             this.levelState = LevelStates.EndOfGame;
             return;
@@ -1901,41 +1901,15 @@ var EndScreen = /** @class */ (function () {
 var endScreen = new EndScreen();
 var GameTime;
 (function (GameTime) {
-    GameTime.fps = 60;
-    GameTime.frame = 0;
+    GameTime.currentElapsedMS = 0;
     function getElapsed() {
-        return 1 / this.fps;
+        return this.currentElapsedMS / 1000;
     }
     GameTime.getElapsed = getElapsed;
     function getElapsedMS() {
-        return 1000 / this.fps;
+        return this.currentElapsedMS;
     }
     GameTime.getElapsedMS = getElapsedMS;
-    function getTotalSeconds() {
-        return GameTime.frame / 60;
-    }
-    GameTime.getTotalSeconds = getTotalSeconds;
-    function getTotalMinutes() {
-        return this.getTotalSeconds() / 60;
-    }
-    GameTime.getTotalMinutes = getTotalMinutes;
-    function getTotalHours() {
-        return this.getTotalMinutes() / 60;
-    }
-    GameTime.getTotalHours = getTotalHours;
-    function totalTimeStringFormat() {
-        var minutes = String(Math.floor(this.getTotalMinutes()));
-        if (minutes.length < 2) {
-            minutes = "0" + minutes;
-        }
-        var secondsPrefix = "";
-        var seconds = this.getTotalSeconds();
-        if (seconds < 10) {
-            secondsPrefix = "0";
-        }
-        return String(Math.floor(this.getTotalHours())) + ":" + minutes + ":" + secondsPrefix + String(seconds);
-    }
-    GameTime.totalTimeStringFormat = totalTimeStringFormat;
 })(GameTime || (GameTime = {}));
 var TILE_WIDTH = 16;
 var TILE_HEIGHT = 16;

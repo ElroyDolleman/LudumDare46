@@ -81,6 +81,7 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number) {
+        GameTime.currentElapsedMS = delta;
         if (this.levelState == LevelStates.Pause || this.levelState == LevelStates.EndOfGame) {
             return;
         }
