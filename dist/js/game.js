@@ -13,11 +13,12 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var LevelStates;
 (function (LevelStates) {
-    LevelStates[LevelStates["Prepare"] = 0] = "Prepare";
-    LevelStates[LevelStates["Playing"] = 1] = "Playing";
-    LevelStates[LevelStates["Pause"] = 2] = "Pause";
-    LevelStates[LevelStates["Lost"] = 3] = "Lost";
-    LevelStates[LevelStates["Win"] = 4] = "Win";
+    LevelStates[LevelStates["EndOfGame"] = 0] = "EndOfGame";
+    LevelStates[LevelStates["Prepare"] = 1] = "Prepare";
+    LevelStates[LevelStates["Playing"] = 2] = "Playing";
+    LevelStates[LevelStates["Pause"] = 3] = "Pause";
+    LevelStates[LevelStates["Lost"] = 4] = "Lost";
+    LevelStates[LevelStates["Win"] = 5] = "Win";
 })(LevelStates || (LevelStates = {}));
 var GameScene = /** @class */ (function (_super) {
     __extends(GameScene, _super);
@@ -79,7 +80,7 @@ var GameScene = /** @class */ (function (_super) {
     };
     GameScene.prototype.update = function (time, delta) {
         var _this = this;
-        if (this.levelState == LevelStates.Pause) {
+        if (this.levelState == LevelStates.Pause || this.levelState == LevelStates.EndOfGame) {
             return;
         }
         if (this.levelState == LevelStates.Prepare) {
@@ -129,8 +130,10 @@ var GameScene = /** @class */ (function (_super) {
         }
     };
     GameScene.prototype.nextLevel = function () {
-        if (this.currentLevelNumber >= 8) {
+        if (this.currentLevelNumber >= 1) {
             console.log("END OF GAME");
+            endScreen.show();
+            this.levelState = LevelStates.EndOfGame;
             return;
         }
         this.currentLevelNumber++;
@@ -1872,6 +1875,30 @@ var CollisionManager = /** @class */ (function () {
     };
     return CollisionManager;
 }());
+var EndScreen = /** @class */ (function () {
+    function EndScreen() {
+    }
+    EndScreen.prototype.show = function () {
+        this.topText = Scenes.Current.add.text(320 / 2, 100, 'text', {
+            fontFamily: 'birdseed',
+            align: 'center',
+            fontSize: '32px',
+        });
+        this.bottomText = Scenes.Current.add.text(320 / 2, 200, 'text', {
+            fontFamily: 'birdseed',
+            align: 'center',
+            fontSize: '16px',
+        });
+        this.topText.text = "The End!";
+        this.bottomText.text = "Thanks for playing";
+        this.topText.depth = 69 + 1;
+        this.bottomText.depth = 69 + 1;
+        this.topText.setOrigin(0.5, 0.5);
+        this.bottomText.setOrigin(0.5, 0.5);
+    };
+    return EndScreen;
+}());
+var endScreen = new EndScreen();
 var GameTime;
 (function (GameTime) {
     GameTime.fps = 60;

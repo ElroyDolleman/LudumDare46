@@ -1,4 +1,5 @@
 enum LevelStates {
+    EndOfGame,
     Prepare,
     Playing,
     Pause,
@@ -80,7 +81,7 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number) {
-        if (this.levelState == LevelStates.Pause) {
+        if (this.levelState == LevelStates.Pause || this.levelState == LevelStates.EndOfGame) {
             return;
         }
         if (this.levelState == LevelStates.Prepare) {
@@ -136,7 +137,8 @@ class GameScene extends Phaser.Scene {
 
     nextLevel() {
         if (this.currentLevelNumber >= 8) {
-            console.log("END OF GAME");
+            endScreen.show();
+            this.levelState = LevelStates.EndOfGame;
             return;
         }
         this.currentLevelNumber++;
