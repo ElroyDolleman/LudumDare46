@@ -36,6 +36,7 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+        GameTime.currentElapsedMS = (1 / 60) * 1000;
         Scenes.Current = this;
         this.screenTransition = new ScreenTransition();
 
@@ -81,7 +82,8 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number) {
-        GameTime.currentElapsedMS = delta;
+        //console.log(delta, GameTime.currentElapsedMS);
+        
         if (this.levelState == LevelStates.Pause || this.levelState == LevelStates.EndOfGame) {
             return;
         }

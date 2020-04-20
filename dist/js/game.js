@@ -43,6 +43,7 @@ var GameScene = /** @class */ (function (_super) {
         this.levelLoader.preloadJsonFiles();
     };
     GameScene.prototype.create = function () {
+        GameTime.currentElapsedMS = (1 / 60) * 1000;
         Scenes.Current = this;
         this.screenTransition = new ScreenTransition();
         var frameNames = Scenes.Current.anims.generateFrameNames('effects', {
@@ -79,8 +80,8 @@ var GameScene = /** @class */ (function (_super) {
         this.cameras.main.setBackgroundColor(0x3CBCFC);
     };
     GameScene.prototype.update = function (time, delta) {
+        //console.log(delta, GameTime.currentElapsedMS);
         var _this = this;
-        GameTime.currentElapsedMS = delta;
         if (this.levelState == LevelStates.Pause || this.levelState == LevelStates.EndOfGame) {
             return;
         }
@@ -164,9 +165,14 @@ var config = {
     pixelArt: true,
     backgroundColor: '#0x0',
     title: "Ludum Dare 46",
-    version: "0.1.0",
+    version: "0.2.1",
     disableContextMenu: true,
     scene: [GameScene],
+    fps: {
+        target: 60,
+        min: 60,
+        forceSetTimeOut: true
+    },
 };
 var game = new Phaser.Game(config);
 var Actor = /** @class */ (function () {
